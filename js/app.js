@@ -174,7 +174,7 @@ function iconHtml(sub, className) {
   const domain = sub.url.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
 
   // logo.dev is pretty good at finding logos, free tier is enough for this
-  const logoUrl = "https://img.logo.dev/" + domain + "?token=pk_KuI_oR-IQ1-fqpAfz3FPEw&size=100&retina=true&format=png";
+  const logoUrl = "https://img.logo.dev/" + domain + "?token=" + LOGO_API_TOKEN + "&size=100&retina=true&format=png";
   return '<img src="' + logoUrl + '" class="' + className + ' object-contain rounded-lg shrink-0" crossorigin="anonymous">';
 }
 
@@ -232,12 +232,15 @@ function setView(view) {
   if (view === "treemap") {
     treemapContainer.classList.remove("hidden");
     renderGrid();
+    updateTrendsDisplay();
   } else if (view === "beeswarm") {
     beeswarmContainer.classList.remove("hidden");
     renderBeeswarm();
+    updateTrendsDisplay();
   } else if (view === "circlepack") {
     circlepackContainer.classList.remove("hidden");
     renderCirclePack();
+    updateTrendsDisplay();
   }
 }
 
@@ -254,6 +257,7 @@ function renderList() {
     nextBtn.classList.add("opacity-50", "cursor-not-allowed");
     clearBtn.classList.add("hidden");
     clearBtn.classList.remove("flex");
+    updateUpcomingRenewals();
     return;
   }
 
@@ -269,17 +273,32 @@ function renderList() {
     const sub = subs[i];
     const color = getColor(sub.color);
 
-    html += '<div class="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">';
-    html += '<div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="editSub(\'' + sub.id + '\')">';
+    // Calculate renewal info if start date is set
+    let renewalBadgeHtml = "";
+    if (sub.startDate) {
+      const renewalDate = ReminderManager.calculateNextRenewal(sub.startDate, sub.cycle);
+      if (renewalDate) {
+        const daysUntil = ReminderManager.getDaysUntilRenewal(renewalDate);
+        if (daysUntil <= 30) {
+          const badgeClass = ReminderManager.getRenewalBadgeClass(daysUntil);
+          const badgeText = ReminderManager.getRenewalBadgeText(daysUntil);
+          renewalBadgeHtml = '<div class="renewal-badge ' + badgeClass + '">' + badgeText + '</div>';
+        }
+      }
+    }
+
+    html += '<div class="relative flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">';
+    html += renewalBadgeHtml;
+    html += '<div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" data-sub-id="' + escapeHtml(sub.id) + '" onclick="editSubFromCard(this)">';
     html += '<div class="w-1 h-10 rounded-full shrink-0" style="background: linear-gradient(180deg, ' + color.bg + ' 0%, ' + color.accent + ' 100%);"></div>';
     html += iconHtml(sub, "w-10 h-10");
     html += '<div class="min-w-0">';
-    html += '<div class="font-bold text-slate-900 truncate">' + sub.name + '</div>';
+    html += '<div class="font-bold text-slate-900 truncate">' + escapeHtml(sub.name) + '</div>';
     html += '<div class="text-xs text-slate-500">' + formatOriginalPrice(sub) + ' / ' + sub.cycle + '</div>';
     html += '</div></div>';
     html += '<div class="flex items-center gap-1">';
-    html += '<button onclick="editSub(\'' + sub.id + '\')" class="text-slate-300 hover:text-indigo-500 p-2"><span class="iconify" data-icon="ph:pencil-simple-bold"></span></button>';
-    html += '<button onclick="removeSub(\'' + sub.id + '\')" class="text-slate-300 hover:text-red-500 p-2"><span class="iconify" data-icon="ph:trash-bold"></span></button>';
+    html += '<button data-sub-id="' + escapeHtml(sub.id) + '" onclick="editSubFromButton(this)" class="text-slate-300 hover:text-indigo-500 p-2"><span class="iconify" data-icon="ph:pencil-simple-bold"></span></button>';
+    html += '<button data-sub-id="' + escapeHtml(sub.id) + '" onclick="removeSubFromButton(this)" class="text-slate-300 hover:text-red-500 p-2"><span class="iconify" data-icon="ph:trash-bold"></span></button>';
     html += '</div></div>';
   }
 
@@ -287,6 +306,7 @@ function renderList() {
   html += '<span class="iconify w-5 h-5" data-icon="ph:plus-bold"></span> Add Another</button>';
 
   listContainer.innerHTML = html;
+  updateUpcomingRenewals();
 }
 
 
@@ -301,7 +321,7 @@ function renderPresets() {
   for (let i = 0; i < popular.length; i++) {
     const preset = popular[i];
     const presetIndex = presets.indexOf(preset);
-    const logo = "https://img.logo.dev/" + preset.domain + "?token=pk_KuI_oR-IQ1-fqpAfz3FPEw&size=100&retina=true&format=png";
+    const logo = "https://img.logo.dev/" + preset.domain + "?token=" + LOGO_API_TOKEN + "&size=100&retina=true&format=png";
 
     html += '<button onclick="openModalWithPreset(' + presetIndex + ')" ';
     html += 'class="flex flex-col items-center gap-1.5 rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md active:scale-95 sm:p-3">';
@@ -333,9 +353,14 @@ function editSub(subId) {
   document.getElementById("sub-currency").value = sub.currency || selectedCurrency;
   document.getElementById("cycle").value = sub.cycle;
   document.getElementById("url").value = sub.url || "";
+  document.getElementById("sub-category").value = sub.category || "other";
+  document.getElementById("sub-start-date").value = sub.startDate || "";
+  document.getElementById("sub-notifications-enabled").checked = sub.notificationsEnabled || false;
+  document.getElementById("sub-reminder-days").value = sub.reminderDays || 7;
 
   updateFavicon(sub.url || "");
   pickColor(sub.color || randColor().id);
+  updateReminderDaysVisibility();
 
   document.getElementById("modal-title").innerText = "Edit Subscription";
   document.querySelector("#sub-form button[type='submit']").innerText = "Save Changes";
@@ -374,7 +399,7 @@ let faviconDebounce = null;
 function updateFavicon(urlInput) {
   clearTimeout(faviconDebounce);
 
-  faviconDebounce = setTimeout(function() {
+  faviconDebounce = setTimeout(function () {
     const preview = document.getElementById("favicon-preview");
 
     if (!urlInput) {
@@ -386,10 +411,108 @@ function updateFavicon(urlInput) {
 
     // only fetch if domain looks legit (at least has a tld)
     if (domain.length > 3) {
-      const logoUrl = "https://img.logo.dev/" + domain + "?token=pk_KuI_oR-IQ1-fqpAfz3FPEw&size=100&retina=true&format=png";
+      const logoUrl = "https://img.logo.dev/" + domain + "?token=" + LOGO_API_TOKEN + "&size=100&retina=true&format=png";
       preview.innerHTML = '<img src="' + logoUrl + '" class="w-full h-full object-cover" crossorigin="anonymous">';
     }
   }, 400);
+}
+
+function updateCategorySuggestion() {
+  const nameInput = document.getElementById("name").value;
+  const suggestionEl = document.getElementById("category-suggestion");
+
+  if (!nameInput) {
+    suggestionEl.innerText = "";
+    return;
+  }
+
+  const suggestedCategory = CategoryManager.suggestCategory(nameInput);
+  const categoryObj = Object.values(CATEGORIES).find(c => c.id === suggestedCategory);
+  suggestionEl.innerText = "Suggested: " + (categoryObj ? categoryObj.name : "Other");
+}
+
+function saveBudget() {
+  const amount = parseFloat(document.getElementById("budget-amount-input").value);
+  const currency = document.getElementById("budget-currency-select").value;
+
+  if (isNaN(amount) || amount <= 0) {
+    alert("Please enter a valid budget amount");
+    return;
+  }
+
+  const result = BudgetManager.setBudget(amount, currency);
+
+  if (result.success) {
+    alert("Budget saved!");
+    updateBudgetDisplay();
+  } else {
+    alert("Error: " + result.error);
+  }
+}
+
+function clearBudget() {
+  if (!confirm("Clear your budget limit?")) return;
+
+  BudgetManager.removeBudget();
+  document.getElementById("budget-amount-input").value = "";
+  updateBudgetDisplay();
+  alert("Budget cleared");
+}
+
+function updateBudgetDisplay() {
+  const usage = BudgetManager.calculateUsage(subs, selectedCurrency);
+  const indicator = document.getElementById("budget-indicator");
+
+  if (!usage) {
+    indicator.classList.add("hidden");
+    return;
+  }
+
+  indicator.classList.remove("hidden");
+
+  // Update text
+  const curr = currencies[usage.currency];
+  const budgetFormatted = formatNum(usage.budget, 0, usage.currency);
+  const totalFormatted = formatNum(usage.total, 0, usage.currency);
+  document.getElementById("budget-text").innerText = curr.symbol + totalFormatted + " / " + curr.symbol + budgetFormatted;
+
+  // Update percentage
+  const percentage = Math.min(usage.percentage, 150);
+  document.getElementById("budget-percentage").innerText = Math.round(usage.percentage) + "%";
+
+  // Update bar
+  const fill = document.getElementById("budget-fill");
+  const color = BudgetManager.getThresholdColor(usage.status);
+  fill.style.width = percentage + "%";
+  fill.style.backgroundColor = color;
+
+  // Update status message
+  const status = BudgetManager.getStatusMessage(usage.status);
+  document.getElementById("budget-status").innerText = status;
+}
+
+function initBudgetCurrencySelector() {
+  const dropdown = document.getElementById("budget-currency-select");
+  if (!dropdown) return;
+
+  let html = "";
+  const currencyCodes = Object.keys(currencies);
+
+  for (let i = 0; i < currencyCodes.length; i++) {
+    const code = currencyCodes[i];
+    const curr = currencies[code];
+    html += '<option value="' + code + '">' + curr.symbol + ' ' + code + '</option>';
+  }
+
+  dropdown.innerHTML = html;
+  dropdown.value = selectedCurrency;
+
+  // Load saved budget if exists
+  const budget = BudgetManager.getBudget();
+  if (budget) {
+    document.getElementById("budget-amount-input").value = budget.amount;
+    dropdown.value = budget.currency;
+  }
 }
 
 function initCurrencySelector() {
@@ -407,7 +530,7 @@ function initCurrencySelector() {
   }
 
   dropdown.innerHTML = html;
-  dropdown.addEventListener("change", function(e) {
+  dropdown.addEventListener("change", function (e) {
     saveCurrency(e.target.value);
   });
 }
@@ -442,7 +565,11 @@ function handleFormSubmit(evt) {
     cycle: document.getElementById("cycle").value,
     url: document.getElementById("url").value,
     color: document.getElementById("selected-color").value || randColor().id,
-    date: document.getElementById("date").value || ""
+    date: document.getElementById("date").value || "",
+    category: document.getElementById("sub-category").value || "other",
+    startDate: document.getElementById("sub-start-date").value || "",
+    notificationsEnabled: document.getElementById("sub-notifications-enabled").checked || false,
+    reminderDays: parseInt(document.getElementById("sub-reminder-days").value) || 7
   };
 
   if (existingId) {
@@ -458,14 +585,354 @@ function handleFormSubmit(evt) {
   hideModal();
 }
 
+function updateReminderDaysVisibility() {
+  const checkbox = document.getElementById("sub-notifications-enabled");
+  const section = document.getElementById("reminder-days-section");
+  if (!checkbox || !section) return;
+
+  if (checkbox.checked) {
+    section.classList.remove("hidden");
+  } else {
+    section.classList.add("hidden");
+  }
+}
+
+function updateUpcomingRenewals() {
+  const container = document.getElementById("upcoming-renewals-section");
+  const list = document.getElementById("upcoming-renewals-list");
+
+  if (!container || !list) return;
+
+  const upcoming = ReminderManager.getUpcomingRenewals(subs, 30);
+
+  if (upcoming.length === 0) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  container.classList.remove("hidden");
+
+  let html = "";
+  for (let i = 0; i < upcoming.length; i++) {
+    const sub = upcoming[i];
+    const formattedDate = new Date(sub.renewalDate).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    });
+
+    html += '<div class="renewal-item">';
+    html += '<div class="renewal-item-name">' + sub.name + '</div>';
+    html += '<div class="renewal-item-date">' + formattedDate + '</div>';
+    html += '<div class="renewal-item-days">' + sub.daysUntilRenewal + 'd</div>';
+    html += '</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+function updateTrendsDisplay() {
+  const container = document.getElementById("trends-section");
+  if (!container) return;
+
+  if (!TrendsAnalyzer.hasEnoughData()) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  container.classList.remove("hidden");
+
+  // Update MoM
+  const mom = TrendsAnalyzer.calculateMoMChange();
+  if (mom) {
+    const momValue = document.getElementById("mom-value");
+    const momDetail = document.getElementById("mom-detail");
+
+    const icon = mom.direction === "up" ? "↑" : mom.direction === "down" ? "↓" : "→";
+    const color = mom.direction === "up" ? "#ef4444" : mom.direction === "down" ? "#22c55e" : "#3b82f6";
+
+    momValue.innerHTML = '<span style="color:' + color + '">' + icon + ' ' + Math.abs(mom.percentage).toFixed(1) + '%</span>';
+    momValue.style.color = "inherit";
+    momDetail.innerText = (mom.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(mom.change));
+  } else {
+    document.getElementById("mom-value").innerText = "—";
+    document.getElementById("mom-detail").innerText = "";
+  }
+
+  // Update YoY
+  const yoy = TrendsAnalyzer.calculateYoYChange();
+  if (yoy) {
+    const yoyValue = document.getElementById("yoy-value");
+    const yoyDetail = document.getElementById("yoy-detail");
+
+    const icon = yoy.direction === "up" ? "↑" : yoy.direction === "down" ? "↓" : "→";
+    const color = yoy.direction === "up" ? "#ef4444" : yoy.direction === "down" ? "#22c55e" : "#3b82f6";
+
+    yoyValue.innerHTML = '<span style="color:' + color + '">' + icon + ' ' + Math.abs(yoy.percentage).toFixed(1) + '%</span>';
+    yoyValue.style.color = "inherit";
+    yoyDetail.innerText = (yoy.change >= 0 ? "+" : "-") + formatCurrency(Math.abs(yoy.change));
+  } else {
+    document.getElementById("yoy-value").innerText = "—";
+    document.getElementById("yoy-detail").innerText = "";
+  }
+
+  // Update direction
+  const trend = TrendsAnalyzer.getTrendDirection(6);
+  const directionValue = document.getElementById("direction-value");
+  const directionDetail = document.getElementById("direction-detail");
+
+  const directionLabel = trend.direction === "increasing" ? "Increasing" : trend.direction === "decreasing" ? "Decreasing" : "Stable";
+  const directionIcon = trend.direction === "increasing" ? "📈" : trend.direction === "decreasing" ? "📉" : "➡️";
+
+  directionValue.innerText = directionIcon + " " + directionLabel;
+  directionDetail.innerText = "Last 6 months";
+}
+
+function exportTrendsAsCSV() {
+  TrendsAnalyzer.downloadTrendData();
+}
+
+// ===== Google Sheets Integration Functions =====
+
+/**
+ * Connect Google Sheets
+ */
+async function connectGoogleSheets() {
+  const sheetUrl = document.getElementById("sheets-url")?.value;
+  const apiKey = document.getElementById("sheets-api-key")?.value;
+
+  if (!sheetUrl || !apiKey) {
+    alert('Please enter both Google Sheet URL and API Key');
+    return;
+  }
+
+  const result = await SheetsAPI.setCredentials(sheetUrl, apiKey);
+
+  if (result.success) {
+    alert('✓ Connected to Google Sheets!');
+    updateSheetsSettingsUI();
+
+    // Do initial sync
+    const synced = await SyncManager.pullFromSheets();
+    if (synced) {
+      alert('✓ Initial sync successful!');
+    }
+  } else {
+    alert('✗ Connection failed: ' + result.error);
+  }
+}
+
+/**
+ *  Disconnect Google Sheets
+ */
+function disconnectGoogleSheets() {
+  if (confirm('Are you sure? This will not delete data, but you\'ll no longer sync to Google Sheets.')) {
+    SheetsAPI.clearCredentials();
+    SyncManager.setSyncStatus('idle');
+    updateSheetsSettingsUI();
+    alert('✓ Disconnected from Google Sheets');
+  }
+}
+
+/**
+ * Update Sheets settings UI based on connection status
+ */
+function updateSheetsSettingsUI() {
+  const creds = SheetsAPI.getCredentials();
+  const statusDiv = document.getElementById('sheets-status');
+  const urlInput = document.getElementById('sheets-url');
+  const keyInput = document.getElementById('sheets-api-key');
+  const connectBtn = document.querySelector('[onclick="connectGoogleSheets()"]');
+  const disconnectBtn = document.querySelector('[onclick="disconnectGoogleSheets()"]');
+
+  if (!statusDiv) return;
+
+  if (creds) {
+    statusDiv.className = 'connected';
+    statusDiv.innerText = '✓ Connected to Google Sheets';
+    if (urlInput) urlInput.value = creds.sheetsUrl;
+    if (keyInput) keyInput.value = '••••••••' + creds.apiKey.slice(-4);
+    if (connectBtn) connectBtn.disabled = true;
+    if (disconnectBtn) disconnectBtn.disabled = false;
+  } else {
+    statusDiv.className = 'disconnected';
+    statusDiv.innerText = 'Not Connected';
+    if (urlInput) urlInput.value = '';
+    if (keyInput) keyInput.value = '';
+    if (connectBtn) connectBtn.disabled = false;
+    if (disconnectBtn) disconnectBtn.disabled = true;
+  }
+}
+
+// ===== Conflict Resolution Modal Functions =====
+
+/**
+ * Show conflict resolution dialog
+ * @param {Array} conflicts - Array of conflict objects
+ */
+function showConflictDialog(conflicts) {
+  if (conflicts.length === 0) return;
+
+  const modal = document.getElementById('conflict-modal');
+  const description = document.getElementById('conflict-description');
+  const comparison = document.getElementById('conflict-comparison');
+
+  if (!modal || !description || !comparison) return;
+
+  // Build description
+  const conflictTexts = conflicts.map(c =>
+    `${c.local.name} was modified in both places`
+  ).join(', ');
+  description.innerText = `${conflicts.length} conflict(s) detected: ${conflictTexts}`;
+
+  // Build comparison view
+  let comparisonHTML = '<div class="space-y-4">';
+  for (let conflict of conflicts) {
+    comparisonHTML += `
+      <div class="border border-slate-200 rounded-lg p-3">
+        <div class="font-semibold text-slate-900 mb-2">${conflict.local.name}</div>
+        <div class="text-xs space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-blue-50 p-2 rounded">
+              <div class="font-bold text-blue-900 mb-1">Local</div>
+              <div class="text-slate-600">
+                Price: ${conflict.local.price}<br/>
+                Modified: ${new Date(conflict.localTime).toLocaleString()}
+              </div>
+            </div>
+            <div class="bg-green-50 p-2 rounded">
+              <div class="font-bold text-green-900 mb-1">Cloud</div>
+              <div class="text-slate-600">
+                Price: ${conflict.cloud.price}<br/>
+                Modified: ${new Date(conflict.cloudTime).toLocaleString()}
+              </div>
+            </div>
+          </div>
+          <div class="text-slate-500 text-center text-xs">
+            Newer version: <span class="font-bold">${conflict.cloudTime > conflict.localTime ? 'Cloud' : 'Local'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  comparisonHTML += '</div>';
+
+  comparison.innerHTML = comparisonHTML;
+
+  // Store conflicts for resolution
+  window.currentConflicts = conflicts;
+
+  // Show modal
+  modal.classList.remove('hidden');
+}
+
+/**
+ * Hide conflict dialog
+ */
+function hideConflictDialog() {
+  const modal = document.getElementById('conflict-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+/**
+ * Resolve conflicts by keeping one version
+ * @param {string} choice - 'local' or 'cloud'
+ */
+function resolveConflict(choice) {
+  const conflicts = window.currentConflicts;
+  if (!conflicts) {
+    hideConflictDialog();
+    return;
+  }
+
+  // Apply user's choice
+  for (let conflict of conflicts) {
+    if (choice === 'cloud') {
+      // Keep cloud version
+      const index = subs.findIndex(s => s.id === conflict.id);
+      if (index !== -1) {
+        subs[index] = conflict.cloud;
+      }
+    }
+    // Else keep local (do nothing, already in subs)
+  }
+
+  save();
+  hideConflictDialog();
+  window.currentConflicts = null;
+
+  if (choice === 'cloud') {
+    alert('✓ Resolved: Kept cloud versions');
+  } else {
+    alert('✓ Resolved: Kept local versions');
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  ThemeManager.init();
   await window.initRates();
   load();
   loadCurrency();
   initColorPicker();
   initCurrencySelector();
   initFormCurrencySelector();
+  initBudgetCurrencySelector();
   renderPresets();
   renderList();
+  updateBudgetDisplay();
+
+  // Initialize Google Sheets sync manager
+  if (typeof SyncManager !== 'undefined') {
+    await SyncManager.init();
+  }
+
+  // Record initial snapshot if don't have one for this month
+  TrendsAnalyzer.recordSnapshot();
+
+  // Request notification permission on first visit
+  if (Notification && Notification.permission === "default") {
+    ReminderManager.requestNotificationPermission();
+  }
+
+  // Set up event listeners for reminder form
+  const notificationsCheckbox = document.getElementById("sub-notifications-enabled");
+  if (notificationsCheckbox) {
+    notificationsCheckbox.addEventListener("change", updateReminderDaysVisibility);
+  }
+
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
 });
+
+/**
+ * Wrapper function for XSS-safe edit subscription from card click
+ * @param {HTMLElement} element - The clicked element
+ */
+function editSubFromCard(element) {
+  const subId = element.getAttribute("data-sub-id");
+  if (subId) {
+    editSub(subId);
+  }
+}
+
+/**
+ * Wrapper function for XSS-safe edit subscription from button click
+ * @param {HTMLElement} element - The clicked button element
+ */
+function editSubFromButton(element) {
+  const subId = element.getAttribute("data-sub-id");
+  if (subId) {
+    editSub(subId);
+  }
+}
+
+/**
+ * Wrapper function for XSS-safe remove subscription from button click
+ * @param {HTMLElement} element - The clicked button element
+ */
+function removeSubFromButton(element) {
+  const subId = element.getAttribute("data-sub-id");
+  if (subId) {
+    removeSub(subId);
+  }
+}

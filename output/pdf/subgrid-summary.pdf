@@ -1,0 +1,67 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 2722 >>
+stream
+BT /F2 18 Tf 54.00 738.00 Td (SubGrid - One-Page Summary) Tj ET
+BT /F2 12 Tf 54.00 710.00 Td (What it is) Tj ET
+BT /F1 10 Tf 54.00 694.00 Td (SubGrid is a static, in-browser tool that visualizes subscription spending as) Tj ET
+BT /F1 10 Tf 54.00 681.00 Td (proportional layouts \(grid/treemap, beeswarm, circle pack\).) Tj ET
+BT /F1 10 Tf 54.00 668.00 Td (It helps you see monthly and yearly totals at a glance and compare which services) Tj ET
+BT /F1 10 Tf 54.00 655.00 Td (dominate your budget.) Tj ET
+BT /F2 12 Tf 54.00 636.00 Td (Who it's for) Tj ET
+BT /F1 10 Tf 54.00 620.00 Td (People who want a quick visual breakdown of their personal subscription costs.) Tj ET
+BT /F2 12 Tf 54.00 601.00 Td (What it does) Tj ET
+BT /F1 10 Tf 54.00 585.00 Td (- Add and edit subscriptions with price, billing cycle, currency, and URL.) Tj ET
+BT /F1 10 Tf 54.00 572.00 Td (- Visualize costs in a proportional grid \(treemap\) plus beeswarm and circle) Tj ET
+BT /F1 10 Tf 66.00 559.00 Td (pack views.) Tj ET
+BT /F1 10 Tf 54.00 546.00 Td (- Compute monthly and yearly totals in the selected currency.) Tj ET
+BT /F1 10 Tf 54.00 533.00 Td (- Quick-add presets for popular services.) Tj ET
+BT /F1 10 Tf 54.00 520.00 Td (- Import bank CSVs and detect recurring charges as subscriptions.) Tj ET
+BT /F1 10 Tf 54.00 507.00 Td (- Export the visualization to PNG.) Tj ET
+BT /F1 10 Tf 54.00 494.00 Td (- Backup and restore data via JSON, stored in browser localStorage.) Tj ET
+BT /F2 12 Tf 54.00 475.00 Td (How it works) Tj ET
+BT /F1 10 Tf 54.00 459.00 Td (- Static assets: index.html, styles.css, and js/*.js served as a single-page) Tj ET
+BT /F1 10 Tf 66.00 446.00 Td (UI \(Tailwind via CDN\).) Tj ET
+BT /F1 10 Tf 54.00 433.00 Td (- State and persistence: subs array in js/app.js saved to localStorage by) Tj ET
+BT /F1 10 Tf 66.00 420.00 Td (js/storage.js.) Tj ET
+BT /F1 10 Tf 54.00 407.00 Td (- Rendering: treemap.js, beeswarm.js, circlepack.js compute layout and) Tj ET
+BT /F1 10 Tf 66.00 394.00 Td (render DOM; modern-screenshot exports PNG.) Tj ET
+BT /F1 10 Tf 54.00 381.00 Td (- Import and presets: bank-import.js parses CSV and suggests recurring) Tj ET
+BT /F1 10 Tf 66.00 368.00 Td (charges; presets.js seeds quick-add list.) Tj ET
+BT /F1 10 Tf 54.00 355.00 Td (- External services: exchange rates from https://open.er-api.com \(cached) Tj ET
+BT /F1 10 Tf 66.00 342.00 Td (daily\) and logos from logo.dev.) Tj ET
+BT /F1 10 Tf 54.00 329.00 Td (- Backend/API: Not found in repo \(static frontend only\).) Tj ET
+BT /F2 12 Tf 54.00 310.00 Td (How to run) Tj ET
+BT /F1 10 Tf 54.00 294.00 Td (- From repo root, run `npx serve .` or `python -m http.server`.) Tj ET
+BT /F1 10 Tf 54.00 281.00 Td (- Open the local server URL in a browser.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3170
+%%EOF

@@ -7,7 +7,7 @@ function showModal() {
   panel.classList.remove("hidden");
 
   // rAF or the transition won't fire
-  requestAnimationFrame(function() {
+  requestAnimationFrame(function () {
     backdrop.classList.remove("opacity-0");
     if (modalInner) {
       modalInner.classList.remove("translate-y-full", "sm:scale-95", "opacity-0");
@@ -24,7 +24,7 @@ function hideModal() {
     modalInner.classList.add("translate-y-full", "sm:scale-95", "opacity-0");
   }
 
-  setTimeout(function() {
+  setTimeout(function () {
     backdrop.classList.add("hidden");
     panel.classList.add("hidden");
   }, 300);
@@ -34,11 +34,16 @@ function openModal() {
   document.getElementById("sub-form").reset();
   document.getElementById("entry-id").value = "";
   document.getElementById("sub-currency").value = selectedCurrency;
+  document.getElementById("sub-category").value = "other";
+  document.getElementById("sub-notifications-enabled").checked = false;
+  document.getElementById("sub-reminder-days").value = "7";
+  document.getElementById("reminder-days-section").classList.add("hidden");
   updateFavicon("");
   pickColor(randColor().id);
 
   document.getElementById("modal-title").innerText = "Add Subscription";
   document.querySelector("#sub-form button[type='submit']").innerText = "Save Item";
+  document.getElementById("category-suggestion").innerText = "";
 
   showModal();
 }
@@ -59,6 +64,13 @@ function openModalWithPreset(presetIdx) {
   document.getElementById("cycle").value = preset.cycle;
   document.getElementById("url").value = preset.domain;
 
+  // Auto-suggest category based on preset name
+  const suggestedCategory = CategoryManager.suggestCategory(preset.name);
+  document.getElementById("sub-category").value = suggestedCategory;
+
+  const categoryObj = Object.values(CATEGORIES).find(c => c.id === suggestedCategory);
+  document.getElementById("category-suggestion").innerText = "Suggested: " + (categoryObj ? categoryObj.name : "Other");
+
   updateFavicon(preset.domain);
   pickColor(preset.color);
 
@@ -77,7 +89,7 @@ function openSettings() {
   settingsBackdrop.classList.remove("hidden");
   settingsPanel.classList.remove("hidden");
 
-  requestAnimationFrame(function() {
+  requestAnimationFrame(function () {
     settingsBackdrop.classList.remove("opacity-0");
     if (settingsInner) {
       settingsInner.classList.remove("translate-y-full", "sm:scale-95", "opacity-0");
@@ -94,7 +106,7 @@ function closeSettings() {
     settingsInner.classList.add("translate-y-full", "sm:scale-95", "opacity-0");
   }
 
-  setTimeout(function() {
+  setTimeout(function () {
     settingsBackdrop.classList.add("hidden");
     settingsPanel.classList.add("hidden");
   }, 300);
@@ -116,7 +128,7 @@ function openPresetsBrowser() {
   if (presetsBackdrop) presetsBackdrop.classList.remove("hidden");
   if (presetsPanel) presetsPanel.classList.remove("hidden");
 
-  requestAnimationFrame(function() {
+  requestAnimationFrame(function () {
     if (presetsBackdrop) presetsBackdrop.classList.remove("opacity-0");
     if (presetsInner) {
       presetsInner.classList.remove("translate-y-full", "sm:scale-95", "opacity-0");
@@ -133,7 +145,7 @@ function closePresetsBrowser() {
     presetsInner.classList.add("translate-y-full", "sm:scale-95", "opacity-0");
   }
 
-  setTimeout(function() {
+  setTimeout(function () {
     if (presetsBackdrop) presetsBackdrop.classList.add("hidden");
     if (presetsPanel) presetsPanel.classList.add("hidden");
   }, 300);
@@ -174,16 +186,16 @@ function filterPresets(searchQuery) {
   let results = presets;
 
   if (selectedCategory) {
-    results = results.filter(function(p) {
+    results = results.filter(function (p) {
       return p.category === selectedCategory;
     });
   }
 
   if (q.length > 0) {
-    results = results.filter(function(p) {
+    results = results.filter(function (p) {
       return p.name.toLowerCase().includes(q) ||
-             p.category.toLowerCase().includes(q) ||
-             p.domain.toLowerCase().includes(q);
+        p.category.toLowerCase().includes(q) ||
+        p.domain.toLowerCase().includes(q);
     });
   }
 
@@ -224,13 +236,13 @@ function renderPresetsBrowserList(presetsToShow) {
     for (let i = 0; i < items.length; i++) {
       const p = items[i];
       const idx = presets.indexOf(p);
-      const logo = "https://img.logo.dev/" + p.domain + "?token=pk_KuI_oR-IQ1-fqpAfz3FPEw&size=100&retina=true&format=png";
+      const logo = "https://img.logo.dev/" + p.domain + "?token=" + LOGO_API_TOKEN + "&size=100&retina=true&format=png";
 
       html += '<button onclick="selectPresetFromBrowser(' + idx + ')" ';
       html += 'class="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm transition-all hover:border-indigo-200 hover:shadow-md active:scale-[0.98]">';
-      html += '<img src="' + logo + '" class="h-10 w-10 rounded-lg object-contain shrink-0" crossorigin="anonymous" alt="' + p.name + '">';
+      html += '<img src="' + logo + '" class="h-10 w-10 rounded-lg object-contain shrink-0" crossorigin="anonymous" alt="' + escapeHtml(p.name) + '">';
       html += '<div class="min-w-0 flex-1">';
-      html += '<div class="font-semibold text-slate-900 text-sm truncate">' + p.name + '</div>';
+      html += '<div class="font-semibold text-slate-900 text-sm truncate">' + escapeHtml(p.name) + '</div>';
       html += '<div class="text-xs text-slate-500">$' + p.price + '/mo</div>';
       html += '</div></button>';
     }
@@ -244,28 +256,28 @@ function renderPresetsBrowserList(presetsToShow) {
 function selectPresetFromBrowser(idx) {
   closePresetsBrowser();
   // small delay so the close animation finishes before opening the form
-  setTimeout(function() {
+  setTimeout(function () {
     openModalWithPreset(idx);
   }, 300);
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   if (backdrop) backdrop.addEventListener("click", closeModal);
   if (panel) {
     panel.addEventListener("click", closeModal);
-    if (modalInner) modalInner.addEventListener("click", function(e) { e.stopPropagation(); });
+    if (modalInner) modalInner.addEventListener("click", function (e) { e.stopPropagation(); });
   }
 
   if (settingsBackdrop) settingsBackdrop.addEventListener("click", closeSettings);
   if (settingsPanel) {
     settingsPanel.addEventListener("click", closeSettings);
-    if (settingsInner) settingsInner.addEventListener("click", function(e) { e.stopPropagation(); });
+    if (settingsInner) settingsInner.addEventListener("click", function (e) { e.stopPropagation(); });
   }
 
   if (presetsBackdrop) presetsBackdrop.addEventListener("click", closePresetsBrowser);
   if (presetsPanel) {
     presetsPanel.addEventListener("click", closePresetsBrowser);
-    if (presetsInner) presetsInner.addEventListener("click", function(e) { e.stopPropagation(); });
+    if (presetsInner) presetsInner.addEventListener("click", function (e) { e.stopPropagation(); });
   }
 
   const bankBackdrop = document.getElementById("bank-import-backdrop");
@@ -275,6 +287,6 @@ document.addEventListener("DOMContentLoaded", function() {
   if (bankBackdrop) bankBackdrop.addEventListener("click", closeBankImport);
   if (bankPanel) {
     bankPanel.addEventListener("click", closeBankImport);
-    if (bankInner) bankInner.addEventListener("click", function(e) { e.stopPropagation(); });
+    if (bankInner) bankInner.addEventListener("click", function (e) { e.stopPropagation(); });
   }
 });

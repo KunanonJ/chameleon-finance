@@ -368,7 +368,7 @@ function renderDetectedList() {
     html += '<label class="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3 cursor-pointer hover:bg-slate-50 transition-colors' + ringClass + '">';
     html += '<input type="checkbox"' + checked + ' onchange="toggleDetectedSub(' + i + ')" class="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">';
     html += '<div class="flex-1 min-w-0">';
-    html += '<div class="font-semibold text-slate-900 text-sm truncate">' + sub.name + '</div>';
+    html += '<div class="font-semibold text-slate-900 text-sm truncate">' + escapeHtml(sub.name) + '</div>';
     html += '<div class="text-xs text-slate-500">' + sub.cycle + ' · Found ' + sub.count + 'x</div>';
     html += '</div>';
     html += '<div class="text-sm font-bold text-slate-900">$' + sub.price.toFixed(2) + '</div>';
@@ -426,7 +426,7 @@ function renderOtherTransactions(searchFilter) {
 
     html += '<button onclick="addFromOther(' + origIdx + ')" class="flex w-full items-center justify-between rounded-lg border border-slate-100 bg-white px-3 py-2 text-left text-sm transition-all hover:border-indigo-200 hover:bg-indigo-50">';
     html += '<div class="flex-1 min-w-0">';
-    html += '<div class="font-medium text-slate-700 truncate">' + txn.name + '</div>';
+    html += '<div class="font-medium text-slate-700 truncate">' + escapeHtml(txn.name) + '</div>';
     html += '<div class="text-xs text-slate-400">' + txn.count + 'x in statement</div>';
     html += '</div>';
     html += '<div class="flex items-center gap-2">';

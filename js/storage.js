@@ -17,8 +17,34 @@ function load() {
 }
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(subs));
+  // Add/update lastModified timestamp for each subscription
+  const now = new Date().toISOString();
+  for (let i = 0; i < subs.length; i++) {
+    if (!subs[i].lastModified) {
+      subs[i].lastModified = now;
+    }
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(subs));
+  } catch (error) {
+    if (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED") {
+      alert("Storage full - please delete some subscriptions to continue.");
+      console.error("localStorage quota exceeded:", error);
+      return; // Don't proceed if save failed
+    }
+    throw error; // Re-throw other errors
+  }
+
   renderList();
+  if (typeof updateBudgetDisplay === 'function') {
+    updateBudgetDisplay();
+  }
+
+  // Notify sync manager of changes
+  if (typeof SyncManager !== 'undefined' && SyncManager.onDataChanged) {
+    SyncManager.onDataChanged();
+  }
 }
 
 function loadCurrency() {
@@ -68,7 +94,7 @@ function importData(evt) {
 
   const reader = new FileReader();
 
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     try {
       const data = JSON.parse(e.target.result);
 
@@ -78,8 +104,9 @@ function importData(evt) {
 
       for (let i = 0; i < data.subscriptions.length; i++) {
         const sub = data.subscriptions[i];
-        if (!sub.id || !sub.name || typeof sub.price !== "number") {
-          throw new Error("Invalid subscription data");
+        // Validate required fields and price is a positive number
+        if (!sub.id || !sub.name || typeof sub.price !== "number" || !isFinite(sub.price) || sub.price <= 0) {
+          throw new Error("Invalid subscription data - price must be a positive number");
         }
       }
 

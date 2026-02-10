@@ -7,7 +7,9 @@ function getCachedRates() {
         const cached = localStorage.getItem(CACHE_KEY);
         const lastUpdate = localStorage.getItem(DATE_KEY);
         if (!cached) return null;
-        return { rates: JSON.parse(cached), lastUpdate: parseInt(lastUpdate) };
+        const parsedLastUpdate = parseInt(lastUpdate) || 0;
+        if (isNaN(parsedLastUpdate)) return null;
+        return { rates: JSON.parse(cached), lastUpdate: parsedLastUpdate };
     } catch {
         return null;
     }
@@ -21,13 +23,25 @@ function saveRates(rates) {
 async function fetchRatesFromAPI() {
     try {
         const response = await fetch("https://open.er-api.com/v6/latest/USD");
+
+        // Check if response is successful before parsing JSON
+        if (!response.ok) {
+            const statusText = response.statusText || `HTTP ${response.status}`;
+            if (response.status === 429) {
+                console.warn("Rate limit exceeded from exchange rate API");
+            } else {
+                console.error(`Failed to fetch rates: ${statusText}`);
+            }
+            return null;
+        }
+
         const data = await response.json();
 
         if (data.result === "success" && data.rates) {
             saveRates(data.rates);
             return data.rates;
         }
-        throw new Error("Failed to fetch rates");
+        throw new Error("Invalid response structure from rates API");
     } catch (error) {
         console.error("Error fetching exchange rates:", error);
         return null;
