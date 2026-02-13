@@ -67,11 +67,14 @@ function saveCurrency(code) {
 }
 
 function exportData() {
+  // Gather all data for comprehensive backup
   const exportObj = {
-    version: 1,
+    version: 2, // Increment version for new format
     exportedAt: new Date().toISOString(),
     currency: selectedCurrency,
-    subscriptions: subs
+    subscriptions: subs,
+    budget: BudgetManager ? BudgetManager.getBudget() : null,
+    trends: TrendsAnalyzer ? TrendsAnalyzer.getHistory() : []
   };
 
   const jsonStr = JSON.stringify(exportObj, null, 2);
@@ -86,6 +89,7 @@ function exportData() {
   document.body.removeChild(link);
 
   URL.revokeObjectURL(blobUrl);
+  console.log(`✓ Exported ${subs.length} subscriptions, budget, and ${exportObj.trends.length} trend records`);
 }
 
 function importData(evt) {
@@ -140,9 +144,25 @@ function importData(evt) {
         saveCurrency(data.currency);
       }
 
+      // Import budget if present
+      if (data.budget && BudgetManager) {
+        if (data.budget.amount && data.budget.currency) {
+          BudgetManager.setBudget(data.budget.amount, data.budget.currency);
+          console.log(`✓ Imported budget: ${data.budget.amount} ${data.budget.currency}`);
+        }
+      }
+
+      // Import trends if present
+      if (data.trends && Array.isArray(data.trends) && data.trends.length > 0 && TrendsAnalyzer) {
+        localStorage.setItem('subgrid_history', JSON.stringify(data.trends));
+        console.log(`✓ Imported ${data.trends.length} trend records`);
+      }
+
       save();
       closeSettings();
-      alert("Successfully imported " + data.subscriptions.length + " subscription(s)!");
+      alert("Successfully imported " + data.subscriptions.length + " subscription(s)!" +
+            (data.budget ? "\n✓ Budget restored" : "") +
+            (data.trends && data.trends.length > 0 ? `\n✓ ${data.trends.length} trends restored` : ""));
 
     } catch (err) {
       alert("Failed to import: " + err.message);

@@ -325,29 +325,37 @@ const SyncManager = {
    */
   async showConflictDialog(conflicts) {
     return new Promise((resolve) => {
-      // Create a simple dialog (in real implementation, would use modal)
-      const descriptions = conflicts.map(c =>
-        `${c.local.name}: Local (${c.local.lastModified}) vs Cloud (${c.cloud.lastModified})`
-      ).join('\n');
+      // Store the resolve callback for when user makes choice
+      window._syncConflictResolve = resolve;
 
-      const choice = confirm(
-        `${conflicts.length} conflict(s) detected:\n\n${descriptions}\n\nKeep Cloud version? (OK=Cloud, Cancel=Local)`
-      );
+      // Check if the modal-based conflict dialog exists
+      if (typeof window.showConflictDialog === 'function') {
+        // Use the modal-based UI
+        window.showConflictDialog(conflicts);
+      } else {
+        // Fallback to confirm dialog
+        const descriptions = conflicts.map(c =>
+          `${c.local.name}: Local (${c.local.lastModified}) vs Cloud (${c.cloud.lastModified})`
+        ).join('\n');
 
-      // Apply user choice to conflicts
-      for (let conflict of conflicts) {
-        if (choice) {
-          // Keep cloud
-          const index = subs.findIndex(s => s.id === conflict.id);
-          if (index !== -1) {
-            subs[index] = conflict.cloud;
+        const choice = confirm(
+          `${conflicts.length} conflict(s) detected:\n\n${descriptions}\n\nKeep Cloud version? (OK=Cloud, Cancel=Local)`
+        );
+
+        // Apply user choice to conflicts
+        for (let conflict of conflicts) {
+          if (choice) {
+            // Keep cloud
+            const index = subs.findIndex(s => s.id === conflict.id);
+            if (index !== -1) {
+              subs[index] = conflict.cloud;
+            }
           }
         }
-        // Else keep local (do nothing)
-      }
 
-      this.conflictQueue = [];
-      resolve();
+        this.conflictQueue = [];
+        resolve();
+      }
     });
   },
 

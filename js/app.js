@@ -734,6 +734,33 @@ function disconnectGoogleSheets() {
 }
 
 /**
+ * Export all data to Google Sheets (one-click)
+ */
+async function exportToGoogleSheets() {
+  if (!SheetsAPI.isConnected()) {
+    alert('⚠ Not connected to Google Sheets. Please connect first.');
+    return;
+  }
+
+  if (!confirm('Export all data to Google Sheets?\n\nThis will overwrite any existing data in the sheet.')) {
+    return;
+  }
+
+  try {
+    // Use SyncManager's push functionality
+    await SyncManager.pushToSheets();
+
+    if (SyncManager.syncStatus === 'idle') {
+      alert('✓ Successfully exported to Google Sheets!');
+    } else {
+      alert('⚠ Export completed with issues. Check console for details.');
+    }
+  } catch (err) {
+    alert('✗ Export failed: ' + err.message);
+  }
+}
+
+/**
  * Update Sheets settings UI based on connection status
  */
 function updateSheetsSettingsUI() {
@@ -862,10 +889,21 @@ function resolveConflict(choice) {
   hideConflictDialog();
   window.currentConflicts = null;
 
+  // Clear SyncManager's conflict queue
+  if (SyncManager) {
+    SyncManager.conflictQueue = [];
+  }
+
+  // Resolve the promise in SyncManager
+  if (window._syncConflictResolve) {
+    window._syncConflictResolve();
+    window._syncConflictResolve = null;
+  }
+
   if (choice === 'cloud') {
-    alert('✓ Resolved: Kept cloud versions');
+    console.log('✓ Resolved: Kept cloud versions');
   } else {
-    alert('✓ Resolved: Kept local versions');
+    console.log('✓ Resolved: Kept local versions');
   }
 }
 

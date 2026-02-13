@@ -559,6 +559,13 @@
               Sync Now
             </button>
 
+            <!-- Export to Sheets Button -->
+            <button onclick="exportToGoogleSheets()"
+              class="w-full rounded-xl border-2 border-green-200 bg-green-50 py-2.5 font-semibold text-green-700 transition-all hover:border-green-300 hover:bg-green-100 active:scale-95">
+              <span class="iconify mr-1" data-icon="ph:export"></span>
+              Export All to Google Sheets
+            </button>
+
             <!-- Last Sync Time -->
             <div id="last-sync-time" class="text-center text-xs text-slate-400"></div>
           </div>
@@ -702,6 +709,39 @@
       </div>
     </div>
   </div>
+
+  <!-- Conflict Resolution Modal -->
+  <div id="conflict-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50/80 p-5">
+        <h3 class="text-lg font-bold text-slate-900">Sync Conflict Detected</h3>
+      </div>
+
+      <div class="p-6 overflow-y-auto max-h-[50vh]">
+        <p class="text-sm text-slate-600 mb-4" id="conflict-description">
+          Changes were made to the same items in both locations.
+        </p>
+
+        <div id="conflict-comparison" class="mb-4"></div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
+          <strong>💡 Tip:</strong> The system will automatically keep the newer version based on timestamps.
+        </div>
+      </div>
+
+      <div class="border-t border-slate-100 p-4 flex gap-3">
+        <button onclick="resolveConflict('local')"
+          class="flex-1 rounded-xl border-2 border-slate-200 bg-white py-2.5 font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95">
+          Keep Local
+        </button>
+        <button onclick="resolveConflict('cloud')"
+          class="flex-1 rounded-xl bg-indigo-600 py-2.5 font-semibold text-white transition-all hover:bg-indigo-700 active:scale-95">
+          Keep Cloud
+        </button>
+      </div>
+    </div>
+  </div>
+
   <a href="https://www.exchangerate-api.com">Rates By Exchange Rate API</a>
 
 
