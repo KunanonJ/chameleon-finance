@@ -135,8 +135,8 @@ const SyncManager = {
         updateBudgetDisplay();
       }
 
-      this.setSyncStatus('idle');
       this.lastSyncTime = new Date().toISOString();
+      this.setSyncStatus('idle');
       this.saveSyncState();
 
       return true;
@@ -364,8 +364,18 @@ const SyncManager = {
 
     const statusIcon = document.getElementById('sync-status-icon');
     const statusText = document.getElementById('sync-status-text');
+    const lastSyncEl = document.getElementById('last-sync-time');
 
     if (!statusIcon || !statusText) return;
+
+    // Show indicator when connected
+    if (this.isConnected()) {
+      indicator.classList.remove('hidden');
+      indicator.classList.add('flex');
+    } else {
+      indicator.classList.add('hidden');
+      indicator.classList.remove('flex');
+    }
 
     // Update classes
     statusIcon.className = 'status-dot';
@@ -377,7 +387,7 @@ const SyncManager = {
         break;
       case 'idle':
         statusIcon.classList.add('synced');
-        statusText.textContent = `Last sync: ${this.lastSyncTime ? new Date(this.lastSyncTime).toLocaleTimeString() : 'Never'}`;
+        statusText.textContent = 'Synced';
         break;
       case 'error':
         statusIcon.classList.add('error');
@@ -387,6 +397,13 @@ const SyncManager = {
         statusIcon.classList.add('offline');
         statusText.textContent = 'Offline - queued';
         break;
+    }
+
+    // Update last sync time display
+    if (lastSyncEl) {
+      lastSyncEl.textContent = this.lastSyncTime
+        ? `Last sync: ${new Date(this.lastSyncTime).toLocaleTimeString()}`
+        : '';
     }
   }
 };

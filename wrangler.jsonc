@@ -1,5 +1,17 @@
 {
   "name": "abdull-finance",
   "pages_build_output_dir": ".",
-  "compatibility_date": "2025-12-12"
+  "compatibility_date": "2025-12-12",
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "subgrid_events"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "subgrid-storage"
+    }
+  ]
 }

@@ -151,29 +151,24 @@ const SheetsAPI = {
    * @returns {Promise<Array>}
    */
   async readSubscriptions() {
-    try {
-      const rows = await this.fetchSheet('Subscriptions');
-      // Skip header row (row 0)
-      const dataRows = rows.slice(1);
+    const rows = await this.fetchSheet('Subscriptions');
+    // Skip header row (row 0)
+    const dataRows = rows.slice(1);
 
-      return dataRows.map(row => ({
-        id: row[0] || '',
-        name: row[1] || '',
-        price: parseFloat(row[2]) || 0,
-        currency: row[3] || 'USD',
-        cycle: row[4] || 'Monthly',
-        category: row[5] || 'other',
-        startDate: row[6] || '',
-        notificationsEnabled: row[7] === 'true' || row[7] === 'TRUE',
-        reminderDays: parseInt(row[8]) || 7,
-        url: row[9] || '',
-        color: row[10] || 'purple',
-        lastModified: row[11] || new Date().toISOString()
-      })).filter(s => s.id && s.id !== '[DELETED]');
-    } catch (err) {
-      console.error('Failed to read subscriptions:', err);
-      return [];
-    }
+    return dataRows.map(row => ({
+      id: row[0] || '',
+      name: row[1] || '',
+      price: parseFloat(row[2]) || 0,
+      currency: row[3] || 'USD',
+      cycle: row[4] || 'Monthly',
+      category: row[5] || 'other',
+      startDate: row[6] || '',
+      notificationsEnabled: row[7] === 'true' || row[7] === 'TRUE',
+      reminderDays: parseInt(row[8]) || 7,
+      url: row[9] || '',
+      color: row[10] || 'purple',
+      lastModified: row[11] || new Date().toISOString()
+    })).filter(s => s.id && s.id !== '[DELETED]');
   },
 
   /**
@@ -182,21 +177,16 @@ const SheetsAPI = {
    * @returns {Promise<{amount: number, currency: string, lastModified: string}|null>}
    */
   async readBudget() {
-    try {
-      const rows = await this.fetchSheet('Budget');
-      const row = rows[1]; // Skip header
+    const rows = await this.fetchSheet('Budget');
+    const row = rows[1]; // Skip header
 
-      if (!row) return null;
+    if (!row) return null;
 
-      return {
-        amount: parseFloat(row[0]) || 0,
-        currency: row[1] || 'USD',
-        lastModified: row[2] || new Date().toISOString()
-      };
-    } catch (err) {
-      console.error('Failed to read budget:', err);
-      return null;
-    }
+    return {
+      amount: parseFloat(row[0]) || 0,
+      currency: row[1] || 'USD',
+      lastModified: row[2] || new Date().toISOString()
+    };
   },
 
   /**
@@ -205,21 +195,16 @@ const SheetsAPI = {
    * @returns {Promise<Array>}
    */
   async readTrends() {
-    try {
-      const rows = await this.fetchSheet('Trends');
-      const dataRows = rows.slice(1); // Skip header
+    const rows = await this.fetchSheet('Trends');
+    const dataRows = rows.slice(1); // Skip header
 
-      return dataRows.map(row => ({
-        month: row[0] || '',
-        total: parseFloat(row[1]) || 0,
-        subscriptionCount: parseInt(row[2]) || 0,
-        currency: row[3] || 'USD',
-        lastModified: row[4] || new Date().toISOString()
-      }));
-    } catch (err) {
-      console.error('Failed to read trends:', err);
-      return [];
-    }
+    return dataRows.map(row => ({
+      month: row[0] || '',
+      total: parseFloat(row[1]) || 0,
+      subscriptionCount: parseInt(row[2]) || 0,
+      currency: row[3] || 'USD',
+      lastModified: row[4] || new Date().toISOString()
+    }));
   },
 
   /**

@@ -202,6 +202,7 @@ function goToStep(stepNum) {
 
 function setView(view) {
   currentView = view;
+  Analytics.track("view_changed", { view });
 
   // Update button styles
   const views = ["treemap", "beeswarm", "circlepack"];
@@ -333,12 +334,17 @@ function renderPresets() {
 }
 
 function removeSub(subId) {
+  const removed = subs.find(s => s.id === subId);
   subs = subs.filter(s => s.id !== subId);
+  if (removed) {
+    Analytics.track("subscription_removed", { name: removed.name });
+  }
   save();
 }
 
 function clearAllSubs() {
   if (!confirm("Delete all subscriptions?")) return;
+  Analytics.track("subscriptions_cleared");
   subs = [];
   save();
 }
@@ -364,6 +370,11 @@ function editSub(subId) {
 
   document.getElementById("modal-title").innerText = "Edit Subscription";
   document.querySelector("#sub-form button[type='submit']").innerText = "Save Changes";
+
+  // Load existing attachments from R2
+  if (typeof renderExistingAttachments === 'function') {
+    renderExistingAttachments(sub.id);
+  }
 
   showModal();
 }
@@ -577,11 +588,19 @@ function handleFormSubmit(evt) {
     if (index !== -1) {
       subs[index] = subData;
     }
+    Analytics.track("subscription_edited", { name: subData.name, value: subData.price });
   } else {
     subs.push(subData);
+    Analytics.track("subscription_added", { name: subData.name, value: subData.price });
   }
 
   save();
+
+  // Upload pending attachments to R2
+  if (typeof uploadPendingAttachments === 'function') {
+    uploadPendingAttachments(subData.id);
+  }
+
   hideModal();
 }
 
@@ -744,14 +763,16 @@ function updateSheetsSettingsUI() {
 
   if (!statusDiv) return;
 
+  // Remove previous status classes, preserve Tailwind utilities
+  statusDiv.classList.remove('connected', 'error', 'offline');
+
   if (creds) {
-    statusDiv.className = 'connected';
+    statusDiv.classList.add('connected');
     statusDiv.innerText = 'Connected to Google Sheets';
     if (urlInput) urlInput.value = creds.sheetsUrl;
     if (connectBtn) connectBtn.disabled = true;
     if (disconnectBtn) disconnectBtn.disabled = false;
   } else {
-    statusDiv.className = 'disconnected';
     statusDiv.innerText = 'Not Connected';
     if (urlInput) urlInput.value = '';
     if (connectBtn) connectBtn.disabled = false;
@@ -894,6 +915,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     await SyncManager.init();
   }
 
+  // Restore Google Sheets connection state in UI
+  if (typeof updateSheetsSettingsUI === 'function') {
+    updateSheetsSettingsUI();
+  }
+
+  // Initialize R2 cloud storage
+  if (typeof R2Storage !== 'undefined') {
+    R2Storage.init();
+  }
+
   // Record initial snapshot if don't have one for this month
   TrendsAnalyzer.recordSnapshot();
 
@@ -909,6 +940,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
+
+  // Track page view
+  Analytics.track("page_view", { subs_count: subs.length });
 });
 
 /**

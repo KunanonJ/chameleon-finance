@@ -41,6 +41,13 @@ function openModal() {
   updateFavicon("");
   pickColor(randColor().id);
 
+  // Clear attachment state
+  if (typeof pendingAttachmentFiles !== 'undefined') pendingAttachmentFiles = [];
+  const pendingAtt = document.getElementById("pending-attachments");
+  if (pendingAtt) { pendingAtt.classList.add("hidden"); pendingAtt.innerHTML = ""; }
+  const existingAtt = document.getElementById("existing-attachments");
+  if (existingAtt) { existingAtt.classList.add("hidden"); existingAtt.innerHTML = ""; }
+
   document.getElementById("modal-title").innerText = "Add Subscription";
   document.querySelector("#sub-form button[type='submit']").innerText = "Save Item";
   document.getElementById("category-suggestion").innerText = "";

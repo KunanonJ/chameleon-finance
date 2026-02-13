@@ -45,6 +45,11 @@ function save() {
   if (typeof SyncManager !== 'undefined' && SyncManager.onDataChanged) {
     SyncManager.onDataChanged();
   }
+
+  // Schedule R2 cloud auto-backup
+  if (typeof R2Storage !== 'undefined' && R2Storage.scheduleBackup) {
+    R2Storage.scheduleBackup();
+  }
 }
 
 function loadCurrency() {
@@ -89,7 +94,15 @@ function exportData() {
   document.body.removeChild(link);
 
   URL.revokeObjectURL(blobUrl);
+  Analytics.track("data_exported", { value: subs.length });
   console.log(`✓ Exported ${subs.length} subscriptions, budget, and ${exportObj.trends.length} trend records`);
+
+  // Also save to R2 cloud storage if connected
+  if (typeof R2Storage !== 'undefined' && R2Storage.isConnected) {
+    R2Storage.saveExport(link.download, jsonStr, "application/json")
+      .then(() => console.log("✓ Export also saved to cloud"))
+      .catch(err => console.warn("Cloud export save failed:", err));
+  }
 }
 
 function importData(evt) {
@@ -160,6 +173,7 @@ function importData(evt) {
 
       save();
       closeSettings();
+      Analytics.track("data_imported", { value: data.subscriptions.length });
       alert("Successfully imported " + data.subscriptions.length + " subscription(s)!" +
             (data.budget ? "\n✓ Budget restored" : "") +
             (data.trends && data.trends.length > 0 ? `\n✓ ${data.trends.length} trends restored` : ""));

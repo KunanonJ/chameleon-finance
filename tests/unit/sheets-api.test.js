@@ -149,13 +149,12 @@ describe('SheetsAPI - Google Sheets Public CSV Reader', () => {
       expect(subs[0].notificationsEnabled).toBe(true);
     });
 
-    test('SA-15: Should return empty array on fetch error', async () => {
+    test('SA-15: Should throw on fetch error', async () => {
       SheetsAPI.spreadsheetId = 'test123';
 
       global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
-      const subs = await SheetsAPI.readSubscriptions();
-      expect(subs).toEqual([]);
+      await expect(SheetsAPI.readSubscriptions()).rejects.toThrow('HTTP 500');
     });
   });
 
