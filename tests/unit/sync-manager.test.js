@@ -14,8 +14,7 @@ global.SheetsAPI = {
   getCredentials: jest.fn(() => null),
   readSubscriptions: jest.fn(async () => []),
   readBudget: jest.fn(async () => null),
-  readTrends: jest.fn(async () => []),
-  batchSync: jest.fn(async () => ({ success: true, syncedAt: new Date().toISOString(), itemsCount: 0 }))
+  readTrends: jest.fn(async () => [])
 };
 
 global.OfflineQueue = {
@@ -114,14 +113,14 @@ describe('SyncManager - Bidirectional Sync', () => {
       expect(OfflineQueue.addChange).toHaveBeenCalled();
     });
 
-    test('SM-7: Should debounce push when online and connected', () => {
+    test('SM-7: Should not queue when online and connected (read-only model)', () => {
       SheetsAPI.isConnected.mockReturnValue(true);
       SyncManager.syncStatus = 'idle';
 
       SyncManager.onDataChanged();
 
-      // Timer should be set but not fired yet
-      expect(SyncManager.syncDebounceTimer).not.toBeNull();
+      // In read-only model, onDataChanged does nothing when connected
+      expect(OfflineQueue.addChange).not.toHaveBeenCalled();
     });
   });
 

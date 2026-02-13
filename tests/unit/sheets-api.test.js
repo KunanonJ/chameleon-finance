@@ -1,4 +1,4 @@
-// Tests for Google Sheets API Wrapper
+// Tests for Google Sheets Public CSV Reader (no API key)
 const fs = require('fs');
 const path = require('path');
 
@@ -14,12 +14,11 @@ if (typeof SheetsAPI === 'undefined') {
   throw new Error('SheetsAPI failed to load');
 }
 
-describe('SheetsAPI - Google Sheets Integration', () => {
+describe('SheetsAPI - Google Sheets Public CSV Reader', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
     SheetsAPI.spreadsheetId = null;
-    SheetsAPI.apiKey = null;
     SheetsAPI.sheetsUrl = null;
   });
 
@@ -36,98 +35,110 @@ describe('SheetsAPI - Google Sheets Integration', () => {
     });
   });
 
+  describe('parseCSV', () => {
+    test('SA-3: Should parse simple CSV text', () => {
+      const csv = 'Name,Price,Currency\nNetflix,15.99,USD\nSpotify,9.99,USD';
+      const rows = SheetsAPI.parseCSV(csv);
+      expect(rows.length).toBe(3);
+      expect(rows[0]).toEqual(['Name', 'Price', 'Currency']);
+      expect(rows[1]).toEqual(['Netflix', '15.99', 'USD']);
+    });
+
+    test('SA-4: Should handle quoted fields with commas', () => {
+      const csv = '"Name, Full",Price\n"Netflix, Premium",15.99';
+      const rows = SheetsAPI.parseCSV(csv);
+      expect(rows[1][0]).toBe('Netflix, Premium');
+    });
+
+    test('SA-5: Should handle empty input', () => {
+      const rows = SheetsAPI.parseCSV('');
+      expect(rows).toEqual([]);
+    });
+  });
+
   describe('setCredentials', () => {
-    test('SA-3: Should store valid credentials in localStorage', async () => {
-      global.fetch.mockResolvedValueOnce({ ok: true });
+    test('SA-6: Should store valid URL in localStorage (no API key)', async () => {
+      global.fetch.mockResolvedValueOnce({ ok: true, text: async () => '"A1"' });
 
       const result = await SheetsAPI.setCredentials(
-        'https://docs.google.com/spreadsheets/d/test123/edit',
-        'AIzaTestKey'
+        'https://docs.google.com/spreadsheets/d/test123/edit'
       );
 
       expect(result.success).toBe(true);
       const stored = JSON.parse(localStorage.getItem('_sheets_config'));
       expect(stored.spreadsheetId).toBe('test123');
-      expect(stored.apiKey).toBe('AIzaTestKey');
+      expect(stored.apiKey).toBeUndefined();
     });
 
-    test('SA-4: Should reject invalid Sheet URL', async () => {
-      const result = await SheetsAPI.setCredentials(
-        'https://example.com/not-sheets',
-        'AIzaTestKey'
-      );
+    test('SA-7: Should reject invalid Sheet URL', async () => {
+      const result = await SheetsAPI.setCredentials('https://example.com/not-sheets');
       expect(result.success).toBe(false);
       expect(result.error).toContain('Invalid');
     });
 
-    test('SA-5: Should reject when API returns error', async () => {
+    test('SA-8: Should reject when sheet is not publicly accessible', async () => {
       global.fetch.mockResolvedValueOnce({ ok: false, status: 403 });
 
       const result = await SheetsAPI.setCredentials(
-        'https://docs.google.com/spreadsheets/d/test123/edit',
-        'BadKey'
+        'https://docs.google.com/spreadsheets/d/test123/edit'
       );
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Invalid API Key');
+      expect(result.error).toContain('not accessible');
     });
   });
 
   describe('getCredentials', () => {
-    test('SA-6: Should return null when no credentials stored', () => {
+    test('SA-9: Should return null when no connection stored', () => {
       const creds = SheetsAPI.getCredentials();
       expect(creds).toBeNull();
     });
 
-    test('SA-7: Should return stored credentials', () => {
+    test('SA-10: Should return stored connection (no apiKey)', () => {
       localStorage.setItem('_sheets_config', JSON.stringify({
         spreadsheetId: 'abc123',
-        apiKey: 'testkey',
         sheetsUrl: 'https://docs.google.com/spreadsheets/d/abc123/edit'
       }));
 
       const creds = SheetsAPI.getCredentials();
       expect(creds.spreadsheetId).toBe('abc123');
-      expect(creds.apiKey).toBe('testkey');
+      expect(creds.sheetsUrl).toContain('abc123');
+      expect(creds.apiKey).toBeUndefined();
     });
   });
 
   describe('clearCredentials', () => {
-    test('SA-8: Should remove all stored credentials', () => {
+    test('SA-11: Should remove all stored connection data', () => {
       localStorage.setItem('_sheets_config', JSON.stringify({
-        spreadsheetId: 'abc', apiKey: 'key', sheetsUrl: 'url'
+        spreadsheetId: 'abc', sheetsUrl: 'url'
       }));
 
       SheetsAPI.clearCredentials();
       expect(localStorage.getItem('_sheets_config')).toBeNull();
       expect(SheetsAPI.spreadsheetId).toBeNull();
-      expect(SheetsAPI.apiKey).toBeNull();
     });
   });
 
   describe('isConnected', () => {
-    test('SA-9: Should return false when no credentials', () => {
+    test('SA-12: Should return false when no spreadsheetId', () => {
       expect(SheetsAPI.isConnected()).toBe(false);
     });
 
-    test('SA-10: Should return true when credentials are set', () => {
+    test('SA-13: Should return true when spreadsheetId is set (no apiKey needed)', () => {
       SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
       expect(SheetsAPI.isConnected()).toBe(true);
     });
   });
 
   describe('readSubscriptions', () => {
-    test('SA-11: Should parse API response into subscription objects', async () => {
+    test('SA-14: Should parse CSV response into subscription objects', async () => {
       SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
+
+      const csvData = 'ID,Name,Price,Currency,Cycle,Category,StartDate,Notifications,ReminderDays,URL,Color,LastModified\n' +
+        'id1,Netflix,15.99,USD,Monthly,entertainment,2025-01-01,true,7,netflix.com,red,2025-01-01T00:00:00Z';
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          values: [
-            ['id1', 'Netflix', '15.99', 'USD', 'Monthly', 'entertainment', '2025-01-01', 'true', '7', 'netflix.com', 'red', '2025-01-01T00:00:00Z']
-          ]
-        })
+        text: async () => csvData
       });
 
       const subs = await SheetsAPI.readSubscriptions();
@@ -138,9 +149,8 @@ describe('SheetsAPI - Google Sheets Integration', () => {
       expect(subs[0].notificationsEnabled).toBe(true);
     });
 
-    test('SA-12: Should return empty array on API error', async () => {
+    test('SA-15: Should return empty array on fetch error', async () => {
       SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
 
       global.fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
@@ -150,15 +160,14 @@ describe('SheetsAPI - Google Sheets Integration', () => {
   });
 
   describe('readBudget', () => {
-    test('SA-13: Should parse budget from API response', async () => {
+    test('SA-16: Should parse budget from CSV response', async () => {
       SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
+
+      const csvData = 'Amount,Currency,LastModified\n500,EUR,2025-06-01T00:00:00Z';
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          values: [['500', 'EUR', '2025-06-01T00:00:00Z']]
-        })
+        text: async () => csvData
       });
 
       const budget = await SheetsAPI.readBudget();
@@ -166,43 +175,18 @@ describe('SheetsAPI - Google Sheets Integration', () => {
       expect(budget.currency).toBe('EUR');
     });
 
-    test('SA-14: Should return null when no budget data', async () => {
+    test('SA-17: Should return null when no budget data', async () => {
       SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
+
+      const csvData = 'Amount,Currency,LastModified';
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ values: undefined })
+        text: async () => csvData
       });
 
       const budget = await SheetsAPI.readBudget();
       expect(budget).toBeNull();
-    });
-  });
-
-  describe('batchSync', () => {
-    test('SA-15: Should sync subscriptions and budget', async () => {
-      SheetsAPI.spreadsheetId = 'test123';
-      SheetsAPI.apiKey = 'testkey';
-
-      // Mock readSubscriptions (for updateSubscription finding existing)
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ values: [] }) // read subs (empty)
-        })
-        .mockResolvedValueOnce({ ok: true }) // append sub
-        .mockResolvedValueOnce({ ok: true }); // update budget
-
-      const result = await SheetsAPI.batchSync({
-        subscriptions: [{ id: 'new1', name: 'Test', price: 10, currency: 'USD' }],
-        budget: { amount: 100, currency: 'USD' },
-        trends: []
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.syncedAt).toBeTruthy();
-      expect(result.itemsCount).toBeGreaterThan(0);
     });
   });
 });

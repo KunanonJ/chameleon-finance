@@ -698,26 +698,25 @@ function exportTrendsAsCSV() {
  */
 async function connectGoogleSheets() {
   const sheetUrl = document.getElementById("sheets-url")?.value;
-  const apiKey = document.getElementById("sheets-api-key")?.value;
 
-  if (!sheetUrl || !apiKey) {
-    alert('Please enter both Google Sheet URL and API Key');
+  if (!sheetUrl) {
+    alert('Please enter a Google Sheet URL');
     return;
   }
 
-  const result = await SheetsAPI.setCredentials(sheetUrl, apiKey);
+  const result = await SheetsAPI.setCredentials(sheetUrl);
 
   if (result.success) {
-    alert('✓ Connected to Google Sheets!');
+    alert('Connected to Google Sheets!');
     updateSheetsSettingsUI();
 
     // Do initial sync
     const synced = await SyncManager.pullFromSheets();
     if (synced) {
-      alert('✓ Initial sync successful!');
+      alert('Initial sync successful!');
     }
   } else {
-    alert('✗ Connection failed: ' + result.error);
+    alert('Connection failed: ' + result.error);
   }
 }
 
@@ -725,38 +724,11 @@ async function connectGoogleSheets() {
  *  Disconnect Google Sheets
  */
 function disconnectGoogleSheets() {
-  if (confirm('Are you sure? This will not delete data, but you\'ll no longer sync to Google Sheets.')) {
+  if (confirm('Are you sure? This will not delete data, but you\'ll no longer sync from Google Sheets.')) {
     SheetsAPI.clearCredentials();
     SyncManager.setSyncStatus('idle');
     updateSheetsSettingsUI();
-    alert('✓ Disconnected from Google Sheets');
-  }
-}
-
-/**
- * Export all data to Google Sheets (one-click)
- */
-async function exportToGoogleSheets() {
-  if (!SheetsAPI.isConnected()) {
-    alert('⚠ Not connected to Google Sheets. Please connect first.');
-    return;
-  }
-
-  if (!confirm('Export all data to Google Sheets?\n\nThis will overwrite any existing data in the sheet.')) {
-    return;
-  }
-
-  try {
-    // Use SyncManager's push functionality
-    await SyncManager.pushToSheets();
-
-    if (SyncManager.syncStatus === 'idle') {
-      alert('✓ Successfully exported to Google Sheets!');
-    } else {
-      alert('⚠ Export completed with issues. Check console for details.');
-    }
-  } catch (err) {
-    alert('✗ Export failed: ' + err.message);
+    alert('Disconnected from Google Sheets');
   }
 }
 
@@ -767,7 +739,6 @@ function updateSheetsSettingsUI() {
   const creds = SheetsAPI.getCredentials();
   const statusDiv = document.getElementById('sheets-status');
   const urlInput = document.getElementById('sheets-url');
-  const keyInput = document.getElementById('sheets-api-key');
   const connectBtn = document.querySelector('[onclick="connectGoogleSheets()"]');
   const disconnectBtn = document.querySelector('[onclick="disconnectGoogleSheets()"]');
 
@@ -775,16 +746,14 @@ function updateSheetsSettingsUI() {
 
   if (creds) {
     statusDiv.className = 'connected';
-    statusDiv.innerText = '✓ Connected to Google Sheets';
+    statusDiv.innerText = 'Connected to Google Sheets';
     if (urlInput) urlInput.value = creds.sheetsUrl;
-    if (keyInput) keyInput.value = '••••••••' + creds.apiKey.slice(-4);
     if (connectBtn) connectBtn.disabled = true;
     if (disconnectBtn) disconnectBtn.disabled = false;
   } else {
     statusDiv.className = 'disconnected';
     statusDiv.innerText = 'Not Connected';
     if (urlInput) urlInput.value = '';
-    if (keyInput) keyInput.value = '';
     if (connectBtn) connectBtn.disabled = false;
     if (disconnectBtn) disconnectBtn.disabled = true;
   }

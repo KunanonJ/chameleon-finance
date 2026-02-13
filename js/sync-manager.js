@@ -75,68 +75,12 @@ const SyncManager = {
 
   /**
    * Handle data change (called from save())
-   * Debounce multiple changes into single sync
+   * Queue changes for offline tracking
    */
   onDataChanged() {
     if (!this.isConnected() || this.syncStatus === 'offline') {
-      // Queue changes for later
       OfflineQueue.addChange('data_modified', {}, new Date().toISOString());
       return;
-    }
-
-    // Clear existing debounce timer
-    if (this.syncDebounceTimer) {
-      clearTimeout(this.syncDebounceTimer);
-    }
-
-    // Set new debounce timer
-    this.syncDebounceTimer = setTimeout(() => {
-      this.pushToSheets();
-    }, this.SYNC_DEBOUNCE_MS);
-  },
-
-  /**
-   * Push local changes to Google Sheets
-   * @returns {Promise<void>}
-   */
-  async pushToSheets() {
-    if (!this.isConnected()) {
-      console.warn('Not connected to Google Sheets');
-      return;
-    }
-
-    try {
-      this.setSyncStatus('syncing');
-
-      // Collect data to push
-      const changes = {
-        subscriptions: subs.map(s => ({
-          ...s,
-          lastModified: s.lastModified || new Date().toISOString()
-        })),
-        budget: BudgetManager.getBudget(),
-        trends: [] // Only pull trends, don't push (auto-managed)
-      };
-
-      // Make API call
-      const result = await SheetsAPI.batchSync(changes);
-
-      if (result.success) {
-        this.lastSyncTime = result.syncedAt;
-        this.pendingChanges = [];
-        this.saveSyncState();
-        this.setSyncStatus('idle');
-        console.log(`✓ Synced to Google Sheets (${result.itemsCount} items)`);
-      } else {
-        throw new Error(result.error || 'Sync failed');
-      }
-    } catch (err) {
-      console.error('Push to Sheets failed:', err);
-      this.lastErrorMessage = err.message;
-      this.setSyncStatus('error');
-
-      // Queue for retry
-      OfflineQueue.addChange('sync_failed', { error: err.message }, new Date().toISOString());
     }
   },
 
@@ -360,30 +304,21 @@ const SyncManager = {
   },
 
   /**
-   * Manual sync: pull then push
+   * Manual sync: pull from sheets (read-only)
    * @returns {Promise<void>}
    */
   async manualSync() {
     if (!this.isConnected()) {
-      alert('Not connected to Google Sheets. Check your credentials.');
+      alert('Not connected to Google Sheets. Please add your Sheet URL.');
       return;
     }
 
-    // Pull first
     const pullSuccess = await this.pullFromSheets();
 
-    if (!pullSuccess) {
-      alert('Failed to sync: ' + (this.lastErrorMessage || 'Unknown error'));
-      return;
-    }
-
-    // Then push
-    await this.pushToSheets();
-
-    if (this.syncStatus === 'idle') {
-      alert('✓ Sync complete!');
+    if (pullSuccess) {
+      alert('Sync complete!');
     } else {
-      alert('⚠ Sync had issues: ' + this.lastErrorMessage);
+      alert('Failed to sync: ' + (this.lastErrorMessage || 'Unknown error'));
     }
   },
 
@@ -406,7 +341,7 @@ const SyncManager = {
     // Process pending queue
     OfflineQueue.processPendingQueue().then(() => {
       if (this.isConnected()) {
-        this.pushToSheets();
+        this.pullFromSheets();
       }
     });
   },

@@ -4,13 +4,12 @@ const path = require('path');
 
 // Mock dependencies BEFORE loading module
 global.SheetsAPI = {
-  deleteSubscription: jest.fn(async () => ({ success: true })),
-  updateBudget: jest.fn(async () => ({ success: true }))
+  isConnected: jest.fn(() => true)
 };
 
 global.SyncManager = {
   isConnected: jest.fn(() => true),
-  pushToSheets: jest.fn(async () => {}),
+  pullFromSheets: jest.fn(async () => true),
   syncStatus: 'idle'
 };
 
@@ -165,12 +164,12 @@ describe('OfflineQueue - Change Persistence & Replay', () => {
       expect(result).toBe(true);
     });
 
-    test('OQ-16: Should call SheetsAPI.deleteSubscription for delete type', async () => {
+    test('OQ-16: Should return true for subscription_delete in read-only mode', async () => {
       const result = await OfflineQueue.processChange({
         type: 'subscription_delete',
         data: { id: 'sub123' }
       });
-      expect(SheetsAPI.deleteSubscription).toHaveBeenCalledWith('sub123');
+      // In read-only mode, all local change types return true (tracked but not pushed)
       expect(result).toBe(true);
     });
 

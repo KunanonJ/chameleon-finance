@@ -137,38 +137,18 @@ const OfflineQueue = {
     try {
       switch (change.type) {
         case 'subscription_add':
-          // Already in local subs[], just need to push to Sheets
-          return true; // Will be handled by overall sync
-
         case 'subscription_edit':
-          // Already updated locally, just need to push
-          return true; // Will be handled by overall sync
-
         case 'subscription_delete':
-          // Already deleted locally, need to delete in Sheets
-          if (change.data.id) {
-            const result = await SheetsAPI.deleteSubscription(change.data.id);
-            return result.success;
-          }
-          return false;
-
         case 'budget_set':
-          // Already set locally, push to Sheets
-          return true; // Will be handled by overall sync
-
         case 'budget_clear':
-          // Clear in Sheets
-          const result = await SheetsAPI.updateBudget({ amount: 0, currency: 'USD' });
-          return result.success;
-
         case 'data_modified':
-          // Generic data change, will be synced
+          // In read-only mode, local changes are tracked but not pushed
           return true;
 
         case 'sync_failed':
-          // Retry sync
+          // Retry pull from sheets
           if (SyncManager.isConnected()) {
-            await SyncManager.pushToSheets();
+            await SyncManager.pullFromSheets();
             return SyncManager.syncStatus === 'idle';
           }
           return false;
