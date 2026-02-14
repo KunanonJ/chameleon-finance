@@ -117,7 +117,7 @@ export default function App() {
           </a>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+            className="rounded-full p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 hover:shadow-md dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
             aria-label="Settings"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,20 +132,20 @@ export default function App() {
       <div className="mb-6 flex rounded-xl bg-slate-100 p-1 dark:bg-slate-700">
         <button
           onClick={() => setActiveTab('finance')}
-          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             activeTab === 'finance'
               ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
           }`}
         >
           Finance Tracker
         </button>
         <button
           onClick={() => setActiveTab('subscriptions')}
-          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
             activeTab === 'subscriptions'
               ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              : 'text-slate-500 hover:bg-white/50 hover:text-slate-700 hover:shadow-sm dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
           }`}
         >
           Subscriptions

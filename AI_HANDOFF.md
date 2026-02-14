@@ -8,7 +8,7 @@
 |-----|-------|
 | **Name** | Chameleon |
 | **Repo** | `https://github.com/KunanonJ/chameleon-finance` |
-| **Production** | `chameleon-finance.workers.dev` (Cloudflare Pages) |
+| **Production** | `chameleon-finance.pages.dev` (Cloudflare Pages) |
 | **Local dev** | `http://localhost:5173` (Vite dev server) |
 | **Description** | Personal finance tracker -- subscriptions + financial records, with visualizations, Google Sheets sync, and mobile support |
 
@@ -40,7 +40,16 @@ Feature-based organization under `src/features/`, shared code under `src/shared/
 ### Component Hierarchy
 
 ```
-App.jsx (tab router: Subscriptions | Finance)
+App.jsx (tab router: Finance Tracker | Subscriptions)
+├── Finance Tab (default, step 1: records, step 2: dashboard)
+│   ├── FinanceSummary (4 summary cards)
+│   ├── FinanceToolbar (Export, Template, Sync)
+│   ├── FinanceList (type/date filters → FinanceRecordCard[])
+│   │   └── FinanceRecordCard (clickable, color bar, custom icon)
+│   ├── Dashboard (step 2)
+│   │   ├── ViewToggle
+│   │   └── FinanceTreemapView / FinanceBeeswarmView / FinanceCirclePackView / FinanceSankeyView
+│   └── FinanceRecordModal (icon upload, color picker, all finance fields)
 ├── Subscriptions Tab (step 1: list, step 2: dashboard)
 │   ├── SubscriptionList → SubscriptionCard[]
 │   ├── PresetsGrid (quick-add)
@@ -51,13 +60,8 @@ App.jsx (tab router: Subscriptions | Finance)
 │   │   ├── TrendsSection
 │   │   └── UpcomingRenewals
 │   └── AddSubscriptionModal
-├── Finance Tab
-│   ├── FinanceSummary (4 summary cards)
-│   ├── FinanceToolbar (Export, Template, Sync)
-│   ├── FinanceList (type/date filters → FinanceRecordCard[])
-│   └── FinanceRecordModal
 ├── SettingsModal (theme, currency, income, budget, Sheets, import/export)
-└── SyncIndicator
+└── SyncIndicator (pulsing status: synced/syncing/error/offline)
 ```
 
 ### State Flow
@@ -95,7 +99,7 @@ App.jsx (tab router: Subscriptions | Finance)
 ```js
 {
   id: string,                    // Date.now() + random suffix
-  date: string,                  // ISO date
+  date: string,                  // ISO date (set via todayLocal() helper)
   description: string,
   interestRate: number,
   income: number,
@@ -108,6 +112,9 @@ App.jsx (tab router: Subscriptions | Finance)
   done: boolean,
   type: string,                  // 'Income' | 'Utility' | 'Loan' | 'Credit Card'
   note: string,
+  color: string,                 // color ID from constants (12-color palette)
+  customIcon: string,            // base64 data URL (max 100px, auto-resized)
+  iconDomain: string,            // domain for logo.dev auto-detection
   lastModified: string           // ISO datetime
 }
 ```
@@ -329,12 +336,16 @@ src/
       AddSubscriptionModal.jsx            # Add/edit form with category auto-suggest
 
     finance/
-      FinanceSection.jsx                  # Main finance container
+      FinanceSection.jsx                  # Main finance container (record list + dashboard)
       FinanceSummary.jsx                  # 4 summary cards (income/expenses/min/net)
       FinanceToolbar.jsx                  # Export CSV, Template, Sync buttons
       FinanceList.jsx                     # Filtered record list with type/date filters
-      FinanceRecordCard.jsx               # Record card with type color strip
-      FinanceRecordModal.jsx              # Add/edit form (all finance fields)
+      FinanceRecordCard.jsx               # Clickable card with color bar + custom icon
+      FinanceRecordModal.jsx              # Add/edit form (icon upload, color picker, all fields)
+      FinanceTreemapView.jsx              # Finance treemap visualization
+      FinanceBeeswarmView.jsx             # Finance beeswarm visualization
+      FinanceCirclePackView.jsx           # Finance circle pack visualization
+      FinanceSankeyView.jsx               # Finance 3-column Sankey (income → expenses → breakdown)
       useFinanceSheetsSync.js             # Finance-specific Sheets sync hook
 
     budget/
@@ -384,7 +395,7 @@ src/
   shared/
     ui/
       Modal.jsx                           # Base modal (backdrop, escape, scroll lock)
-      ColorPicker.jsx                     # 6-color grid picker
+      ColorPicker.jsx                     # 12-color grid picker
       CurrencySelect.jsx                  # Currency dropdown
 
     hooks/
@@ -447,17 +458,30 @@ npm run test:e2e  # E2E tests (Playwright) -- 54 tests across 2 suites
 ### E2E Helper Pattern
 
 ```js
-// finance.spec.js uses a scoped helper to avoid selector ambiguity
+// finance.spec.js uses a scoped helper with requestSubmit() to avoid
+// viewport/scroll issues with the tall finance form modal
 async function addFinanceRecord(page, { description, type, income, expenses }) {
   await page.click('button:has-text("Add Record")');
+  await expect(page.getByRole('heading', { name: 'Add Record' })).toBeVisible();
   const form = page.locator('form');
-  await form.locator('input[placeholder="e.g. Monthly Salary, Water Bill"]').fill(description);
+  // Wait for React useEffect to set the date field before filling
+  await page.waitForFunction(
+    () => document.querySelector('input[type="date"]')?.value !== '',
+    { timeout: 3000 }
+  );
+  await form.locator('input[placeholder="..."]').fill(description);
   if (type) await form.locator('select').first().selectOption(type);
   if (income) await form.locator('input[placeholder="0"]').nth(0).fill(String(income));
   if (expenses) await form.locator('input[placeholder="0"]').nth(1).fill(String(expenses));
-  await form.getByRole('button', { name: 'Add Record' }).click();
+  await form.evaluate((f) => f.requestSubmit());  // bypasses scroll/viewport issues
+  await expect(page.getByRole('heading', { name: 'Add Record' })).not.toBeVisible();
 }
 ```
+
+**Important E2E lessons:**
+- The finance modal form is taller than `max-h-[90vh]` at 720px viewport (default). The submit button gets clipped by `overflow-y: auto`. Use `form.requestSubmit()` instead of clicking the button.
+- Wait for `input[type="date"]` to have a value before filling other fields. The `todayLocal()` date is set via `useEffect` which runs after the first render. Filling fields before the state update causes a stale closure to overwrite the date with `''`, making HTML5 validation reject the submit.
+- Use functional state updates `setForm(prev => ({ ...prev, ... }))` to avoid stale closures in onChange handlers.
 
 ---
 
@@ -526,6 +550,12 @@ File: `.github/workflows/ci.yml`
 | `500e64f` | Fixed dark mode across all components |
 | `bf49369` | Added Financial Tracker (Phase 1-4), tab nav, Sheets sync, E2E tests |
 | `2732b9f` | Updated payment/how-paid options to fixed dropdowns |
+| `36caa6c` | Added brand icons, Finance Tracker as main tab, clear all, logo, CI fixes |
+| `85ae52c` | Fixed BMC button CDN image and E2E tests |
+| `ca40fd3` | Added View Dashboard to Finance Tracker with breakdown charts |
+| `e8e0e4d` | Added Treemap, Beeswarm, Circles, and Sankey views to Finance Dashboard |
+| `6891fa2` | Redesigned Finance Sankey to 3-column layout with expense breakdown |
+| `47db69c` | Made finance record cards clickable to open edit modal |
 
 ---
 
@@ -533,11 +563,18 @@ File: `.github/workflows/ci.yml`
 
 - All features implemented and deployed to production
 - 238 unit tests + 54 E2E tests passing
-- Production build: ~295 KB
-- Finance feature fully integrated with tab navigation
+- Production build: ~321 KB (gzip: ~95 KB)
+- Finance Tracker is the default/primary tab
+- Finance dashboard has 4 visualization types (Treemap, Beeswarm, Circles, Sankey)
+- Finance Sankey uses 3-column layout: Total Income → Total Expenses → Expense breakdown + Net Balance
+- Finance records support custom icon upload (base64) and 12-color picker
+- Sankey node text colors adapt to background luminance for readability in light/dark mode
+- All interactive elements have hover shadow effects
+- Sync indicator pulses with animate-pulse animation
 - Google Sheets sync works for both subscriptions and finance records
-- Dark mode works across all components
+- Dark mode works across all components including Sankey text
 - Mobile support via Capacitor (iOS + Android)
+- Date field uses `todayLocal()` helper for timezone-correct local date (not UTC)
 
 ---
 
@@ -547,7 +584,11 @@ File: `.github/workflows/ci.yml`
 2. **E2E tests require a build first**: `npm run build && npm run test:e2e`
 3. **Use path aliases**: `@features/`, `@shared/`, `@store/` instead of relative paths
 4. **Dark mode**: Always add `dark:` variant classes to new UI elements
-5. **New finance types**: Add to `FINANCE_TYPES` in `financeConstants.js`, update filter pills in `FinanceList.jsx`
-6. **New stores**: Follow Zustand persist pattern with custom storage handler (see `financeStore.js`)
-7. **Selectors in E2E tests**: Scope within `page.locator('form')` when testing modals to avoid ambiguity
-8. **Deploy**: `npm run build && npx wrangler pages deploy dist --project-name=chameleon-finance`
+5. **Sankey text**: Use luminance-based text color computation (see `getTextColor()` in `FinanceSankeyView.jsx`) for text on colored backgrounds
+6. **New finance types**: Add to `FINANCE_TYPES` in `financeConstants.js`, update filter pills in `FinanceList.jsx`
+7. **New stores**: Follow Zustand persist pattern with custom storage handler (see `financeStore.js`)
+8. **Selectors in E2E tests**: Scope within `page.locator('form')` when testing modals to avoid ambiguity
+9. **Form submission in E2E**: Use `form.evaluate(f => f.requestSubmit())` instead of clicking submit buttons in modals (see "E2E Helper Pattern" above)
+10. **React onChange handlers**: Use functional updates `setForm(prev => ...)` to prevent stale closures from overwriting concurrent state updates
+11. **Date handling**: Use local date (`getFullYear/getMonth/getDate`) not `toISOString().split('T')[0]` which returns UTC date (wrong for UTC+ timezones)
+12. **Deploy**: `npm run build && npx wrangler pages deploy dist --project-name=chameleon-finance --branch=main --commit-dirty=true`

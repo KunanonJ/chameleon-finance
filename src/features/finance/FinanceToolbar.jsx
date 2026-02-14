@@ -39,7 +39,7 @@ export default function FinanceToolbar() {
     setConfirmClear(false);
   };
 
-  const btnClass = 'flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700';
+  const btnClass = 'flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 hover:shadow-md dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700';
 
   return (
     <div className="flex gap-2">
@@ -73,10 +73,10 @@ export default function FinanceToolbar() {
       {records.length > 0 && (
         <button
           onClick={handleClearAll}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border py-2.5 text-xs font-semibold transition-colors ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border py-2.5 text-xs font-semibold transition-all ${
             confirmClear
-              ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
-              : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'
+              ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100 hover:shadow-md dark:border-red-500 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
+              : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:shadow-md dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'
           }`}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

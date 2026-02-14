@@ -4,20 +4,32 @@ A personal finance tracker built with React. Track subscriptions and financial r
 
 ## Features
 
-- **Subscription Tracking** -- Add, edit, and delete subscriptions with price, currency, billing cycle, and category
+### Finance Tracker
 - **Financial Records** -- Track income, expenses, loans, and credit card payments with due dates, payment methods, and balance tracking
 - **Finance Summary** -- Real-time summary cards showing total income, expenses, minimum expenses, and net balance
 - **Finance Filters** -- Filter records by type (Income, Utility, Loan, Credit Card) and date range (This Month, Last Month, This Year)
+- **Custom Icons** -- Upload brand icons for records (auto-resized to 100px, stored as base64) with auto-detection from description via logo.dev
+- **Color-Coded Records** -- 12-color picker per record, displayed as a gradient color bar on cards
+- **Clickable Cards** -- Click any finance record card to open the edit modal directly
+- **Finance Dashboard** -- Treemap, beeswarm, circle pack, and Sankey diagram views of your financial data
+- **Finance Sankey** -- 3-column income flow diagram: Total Income → Total Expenses → Expense breakdown by type + Net Balance
 - **Finance Google Sheets Sync** -- Import financial data from a shared Google Sheets template
 - **Finance Template** -- One-click copy of a pre-built Google Sheets template for quick setup
-- **Visual Dashboards** -- Treemap, beeswarm, circle pack, and Sankey diagram views of your spending
+
+### Subscription Tracker
+- **Subscription Tracking** -- Add, edit, and delete subscriptions with price, currency, billing cycle, and category
+- **Subscription Dashboard** -- Treemap, beeswarm, circle pack, and Sankey diagram views of subscription spending
 - **Sankey Diagram** -- Income flow visualization showing how money flows from income through categories to individual subscriptions
 - **Budget Alerts** -- Set monthly budget limits with threshold warnings (safe / warning / caution / danger)
 - **Categories** -- Auto-categorize subscriptions (entertainment, productivity, health, education, utilities)
 - **Renewal Reminders** -- Notifications for upcoming renewals with configurable lead time
 - **Spending Trends** -- Month-over-month and year-over-year analysis with CSV export
-- **Dark Mode** -- System-aware theme toggle with persistence
+
+### General
+- **Dark Mode** -- System-aware theme toggle with persistence; luminance-based text colors on Sankey nodes for readability in both themes
+- **Hover States** -- Shadow and highlight effects on all interactive buttons and cards
 - **Google Sheets Sync** -- Pull subscription data from a public Google Sheet with conflict resolution
+- **Sync Indicator** -- Pulsing status indicator showing sync state (synced, syncing, error, offline)
 - **Offline Support** -- Changes queued locally and replayed when connectivity returns
 - **Multi-Currency** -- 38+ currencies with live exchange rates and IP-based auto-detection
 - **Export** -- Save data as JSON or CSV
@@ -117,12 +129,16 @@ src/
       SubscriptionCard.jsx          # Individual subscription card
       AddSubscriptionModal.jsx      # Add/edit subscription form modal
     finance/
-      FinanceSection.jsx            # Main finance container
+      FinanceSection.jsx            # Main finance container (record list + dashboard)
       FinanceSummary.jsx            # Income/expense/balance summary cards
       FinanceToolbar.jsx            # Export CSV, Copy Template, Sync buttons
       FinanceList.jsx               # Filtered record list with type/date filters
-      FinanceRecordCard.jsx         # Individual finance record card
-      FinanceRecordModal.jsx        # Add/edit finance record form modal
+      FinanceRecordCard.jsx         # Clickable record card with color bar + custom icon
+      FinanceRecordModal.jsx        # Add/edit form modal (icon upload, color picker)
+      FinanceTreemapView.jsx        # Finance treemap visualization
+      FinanceBeeswarmView.jsx       # Finance beeswarm visualization
+      FinanceCirclePackView.jsx     # Finance circle pack visualization
+      FinanceSankeyView.jsx         # Finance 3-column Sankey (income → expenses → breakdown)
       useFinanceSheetsSync.js       # Finance Sheets sync hook
     budget/
       BudgetIndicator.jsx           # Dashboard budget progress bar
@@ -135,10 +151,10 @@ src/
       TrendsSection.jsx             # Trends dashboard section
       useTrends.js                  # Trend analysis (MoM, YoY, export)
     visualizations/
-      TreemapView.jsx               # Treemap chart
-      BeeswarmView.jsx              # Beeswarm chart
-      CirclePackView.jsx            # Circle pack chart
-      SankeyView.jsx                # Sankey diagram (income flow)
+      TreemapView.jsx               # Subscription treemap chart
+      BeeswarmView.jsx              # Subscription beeswarm chart
+      CirclePackView.jsx            # Subscription circle pack chart
+      SankeyView.jsx                # Subscription Sankey diagram (income flow)
       ViewToggle.jsx                # Visualization switcher
     settings/
       SettingsModal.jsx             # Settings modal (theme, currency, income, budget)
@@ -147,7 +163,7 @@ src/
       PresetsGrid.jsx               # Quick-add preset grid
     sync/
       GoogleSheetsSettings.jsx      # Sheets connection UI
-      SyncIndicator.jsx             # Sync status indicator
+      SyncIndicator.jsx             # Pulsing sync status indicator
       sheetsApi.js                  # Google Sheets CSV reader
       syncManager.js                # Sync orchestration + conflict resolution
       offlineQueue.js               # Offline change queue with retry
@@ -155,7 +171,7 @@ src/
   shared/
     ui/
       Modal.jsx                     # Reusable modal component
-      ColorPicker.jsx               # Color picker component
+      ColorPicker.jsx               # 12-color picker component
       CurrencySelect.jsx            # Currency dropdown component
     hooks/
       useTheme.js                   # Theme application hook
@@ -258,7 +274,7 @@ Chameleon deploys to **Cloudflare Pages** from the Vite `dist/` output.
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=chameleonfinance
+npx wrangler pages deploy dist --project-name=chameleon-finance
 ```
 
 ### CI/CD with GitHub Actions

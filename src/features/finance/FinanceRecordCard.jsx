@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getTypeColor, getTypeLabel } from '@shared/lib/financeConstants';
-import { LOGO_API_TOKEN } from '@shared/lib/constants';
+import { LOGO_API_TOKEN, getColor } from '@shared/lib/constants';
 
 export default function FinanceRecordCard({ record, onEdit, onRemove }) {
   const typeColor = getTypeColor(record.type);
@@ -13,14 +13,29 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
     : null;
 
   const initial = (record.description || '?')[0].toUpperCase();
+  const color = record.color ? getColor(record.color) : null;
 
   return (
     <div
       className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
       onClick={() => onEdit(record.id)}
     >
+      {/* Color bar */}
+      {color && (
+        <div
+          className="h-10 w-1 shrink-0 rounded-full"
+          style={{ background: `linear-gradient(180deg, ${color.bg} 0%, ${color.accent} 100%)` }}
+        />
+      )}
+
       {/* Brand icon or fallback initial */}
-      {logoUrl && !iconError ? (
+      {record.customIcon ? (
+        <img
+          src={record.customIcon}
+          className="h-10 w-10 shrink-0 rounded-xl object-cover"
+          alt={record.description}
+        />
+      ) : logoUrl && !iconError ? (
         <img
           src={logoUrl}
           className="h-10 w-10 shrink-0 rounded-xl object-contain"

@@ -9,9 +9,9 @@ export default function SyncIndicator() {
 
   const statusConfig = {
     idle: {
-      dot: 'bg-green-500',
+      dot: 'bg-green-500 animate-pulse',
       text: 'Synced',
-      textColor: 'text-green-600',
+      textColor: 'text-green-600 animate-pulse',
     },
     syncing: {
       dot: 'bg-indigo-500 animate-pulse',

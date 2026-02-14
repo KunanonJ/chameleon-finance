@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useFinanceStore } from '@store/financeStore';
 import { FINANCE_TYPES, PAYMENT_METHODS, HOW_PAID_OPTIONS } from '@shared/lib/financeConstants';
-import { LOGO_API_TOKEN } from '@shared/lib/constants';
+import { LOGO_API_TOKEN, randColor } from '@shared/lib/constants';
 import Modal from '@shared/ui/Modal';
+import ColorPicker from '@shared/ui/ColorPicker';
 
 function extractDomain(text) {
   if (!text) return '';
@@ -20,12 +21,42 @@ function getLogoUrl(domain) {
   return `https://img.logo.dev/${domain}?token=${LOGO_API_TOKEN}&size=100&retina=true&format=png`;
 }
 
+function resizeImage(file, maxSize = 100) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width;
+        let h = img.height;
+        if (w > maxSize || h > maxSize) {
+          const ratio = Math.min(maxSize / w, maxSize / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function todayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const inputClass = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200';
 const selectClass = 'w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200';
 const labelClass = 'mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300';
 
 const defaultForm = {
-  date: new Date().toISOString().split('T')[0],
+  date: '',
   description: '',
   interestRate: '',
   income: '',
@@ -39,6 +70,8 @@ const defaultForm = {
   type: 'Utility',
   note: '',
   iconDomain: '',
+  customIcon: '',
+  color: '',
 };
 
 export default function FinanceRecordModal({ isOpen, onClose, editId }) {
@@ -50,6 +83,7 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
   const [iconValid, setIconValid] = useState(false);
   const [iconLoading, setIconLoading] = useState(false);
   const debounceRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (editId) {
@@ -70,10 +104,12 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
           type: existing.type || 'Utility',
           note: existing.note || '',
           iconDomain: existing.iconDomain || '',
+          customIcon: existing.customIcon || '',
+          color: existing.color || randColor().id,
         });
       }
     } else if (isOpen) {
-      setForm({ ...defaultForm });
+      setForm({ ...defaultForm, date: todayLocal(), color: randColor().id });
       setIconValid(false);
     }
   }, [editId, isOpen, records]);
@@ -121,6 +157,14 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
     img.src = url;
   }, [form.iconDomain]);
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await resizeImage(file);
+    setForm((prev) => ({ ...prev, customIcon: dataUrl }));
+    e.target.value = '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -132,6 +176,8 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
       minimumExpenses: parseFloat(form.minimumExpenses) || 0,
       balance: parseFloat(form.balance) || 0,
       iconDomain: form.iconDomain || '',
+      customIcon: form.customIcon || '',
+      color: form.color || '',
     };
 
     if (editId) {
@@ -176,7 +222,7 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
           <input
             type="text"
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value, iconDomain: '' })}
+            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value, iconDomain: '' }))}
             className={inputClass}
             placeholder="e.g. Netflix, Spotify, Water Bill"
             required
@@ -187,8 +233,18 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
         <div>
           <label className={labelClass}>Brand Icon</label>
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-600 dark:bg-slate-700">
-              {iconLoading ? (
+            <div
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-slate-50 transition-colors hover:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-indigo-500"
+              onClick={() => fileInputRef.current?.click()}
+              title="Click to upload icon"
+            >
+              {form.customIcon ? (
+                <img
+                  src={form.customIcon}
+                  className="h-full w-full rounded-xl object-cover"
+                  alt=""
+                />
+              ) : iconLoading ? (
                 <svg className="h-5 w-5 animate-spin text-slate-300 dark:text-slate-500" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -211,15 +267,32 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
               <input
                 type="text"
                 value={form.iconDomain}
-                onChange={(e) => setForm({ ...form, iconDomain: e.target.value.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0] })}
+                onChange={(e) => setForm({ ...form, iconDomain: e.target.value.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0], customIcon: '' })}
                 className={inputClass}
                 placeholder="Auto-detected or type domain (e.g. netflix.com)"
               />
             </div>
-            {form.iconDomain && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
+              title="Upload icon"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </button>
+            {(form.iconDomain || form.customIcon) && (
               <button
                 type="button"
-                onClick={() => setForm({ ...form, iconDomain: '' })}
+                onClick={() => setForm({ ...form, iconDomain: '', customIcon: '' })}
                 className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-500 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-red-400"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -229,8 +302,14 @@ export default function FinanceRecordModal({ isOpen, onClose, editId }) {
             )}
           </div>
           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-            {iconValid ? 'Icon detected' : 'Auto-detects brand icon from description'}
+            {form.customIcon ? 'Custom icon uploaded' : iconValid ? 'Icon detected' : 'Auto-detects brand icon or upload your own'}
           </p>
+        </div>
+
+        {/* Color */}
+        <div>
+          <label className={labelClass}>Color</label>
+          <ColorPicker value={form.color} onChange={(id) => setForm({ ...form, color: id })} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">

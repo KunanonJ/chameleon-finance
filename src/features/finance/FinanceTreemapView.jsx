@@ -68,7 +68,7 @@ export default function FinanceTreemapView() {
           return (
             <div
               key={cell.id}
-              className="absolute flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/60 transition-all duration-200"
+              className="absolute flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-white/60 transition-all duration-200 hover:brightness-95"
               style={{
                 left: cell.x,
                 top: cell.y,

@@ -14,6 +14,12 @@ async function addFinanceRecord(page, { description, type, income, expenses }) {
 
   const form = page.locator('form');
 
+  // Wait for React useEffect to set the date field before filling other fields
+  await page.waitForFunction(
+    () => document.querySelector('input[type="date"]')?.value !== '',
+    { timeout: 3000 }
+  );
+
   await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill(description);
   if (type) {
     await form.locator('select').first().selectOption(type);
@@ -25,7 +31,8 @@ async function addFinanceRecord(page, { description, type, income, expenses }) {
     await form.locator('input[placeholder="0"]').nth(1).fill(String(expenses));
   }
 
-  await form.getByRole('button', { name: 'Add Record' }).click();
+  await form.evaluate((f) => f.requestSubmit());
+  await expect(page.getByRole('heading', { name: 'Add Record' })).not.toBeVisible();
 }
 
 test.describe('Tab Navigation', () => {
@@ -148,7 +155,7 @@ test.describe('Finance - Add Record', () => {
     await form.locator('input[placeholder="0"]').nth(0).fill('1000');
 
     // Try to submit (should fail HTML5 validation)
-    await form.getByRole('button', { name: 'Add Record' }).click();
+    await form.evaluate((f) => f.requestSubmit());
 
     // Modal should still be open
     await expect(page.getByRole('heading', { name: 'Add Record' })).toBeVisible();
@@ -191,7 +198,7 @@ test.describe('Finance - Record Management', () => {
     // Change the description
     const form = page.locator('form');
     await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill('Updated Salary');
-    await form.getByRole('button', { name: 'Save Changes' }).click();
+    await form.evaluate((f) => f.requestSubmit());
 
     // Verify update
     await expect(page.locator('text=Updated Salary').first()).toBeVisible();
@@ -338,7 +345,7 @@ test.describe('Finance - Full User Flow', () => {
     await expect(page.getByRole('heading', { name: 'Edit Record' })).toBeVisible();
     const form = page.locator('form');
     await form.locator('input[placeholder="e.g. Netflix, Spotify, Water Bill"]').fill('FlowSalaryEdited');
-    await form.getByRole('button', { name: 'Save Changes' }).click();
+    await form.evaluate((f) => f.requestSubmit());
     await expect(page.locator('text=FlowSalaryEdited').first()).toBeVisible();
 
     // 7. Delete expense record (scope to record list to avoid Clear All button)
