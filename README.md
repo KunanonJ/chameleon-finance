@@ -1,11 +1,12 @@
-# SubGrid
+# Chameleon
 
-A subscription cost tracker and visualizer built with React. See where your money goes each month through interactive treemaps, beeswarm charts, and circle packs -- with optional Google Sheets sync and mobile support via Capacitor.
+A subscription cost tracker and visualizer built with React. See where your money goes each month through interactive treemaps, beeswarm charts, circle packs, and Sankey diagrams -- with optional Google Sheets sync and mobile support via Capacitor.
 
 ## Features
 
 - **Subscription Tracking** -- Add, edit, and delete subscriptions with price, currency, billing cycle, and category
-- **Visual Dashboards** -- Treemap, beeswarm, and circle pack views of your spending
+- **Visual Dashboards** -- Treemap, beeswarm, circle pack, and Sankey diagram views of your spending
+- **Sankey Diagram** -- Income flow visualization showing how money flows from income through categories to individual subscriptions
 - **Budget Alerts** -- Set monthly budget limits with threshold warnings (safe / warning / caution / danger)
 - **Categories** -- Auto-categorize subscriptions (entertainment, productivity, health, education, utilities)
 - **Renewal Reminders** -- Notifications for upcoming renewals with configurable lead time
@@ -13,7 +14,7 @@ A subscription cost tracker and visualizer built with React. See where your mone
 - **Dark Mode** -- System-aware theme toggle with persistence
 - **Google Sheets Sync** -- Pull subscription data from a public Google Sheet with conflict resolution
 - **Offline Support** -- Changes queued locally and replayed when connectivity returns
-- **Multi-Currency** -- 38+ currencies with live exchange rates
+- **Multi-Currency** -- 38+ currencies with live exchange rates and IP-based auto-detection
 - **Export** -- Save data as JSON or CSV
 - **Mobile** -- iOS and Android support via Capacitor
 
@@ -37,7 +38,7 @@ npm run preview   # Preview the production build locally
 
 ## Google Sheets Sync
 
-SubGrid can pull data from a public Google Sheet. No API key needed.
+Chameleon can pull data from a public Google Sheet. No API key needed.
 
 ### Sheet Setup
 
@@ -64,7 +65,7 @@ SubGrid can pull data from a public Google Sheet. No API key needed.
 
 ### Connecting
 
-1. Open SubGrid settings panel
+1. Open Chameleon settings panel
 2. Paste your Google Sheet URL
 3. Click **Connect**
 4. Use **Sync Now** to pull the latest data
@@ -74,74 +75,70 @@ Conflict resolution uses last-write-wins by timestamp. If both local and cloud v
 ## Project Structure
 
 ```
-subgrid/
-  index.html                          # Entry point
-  vite.config.js                      # Vite build config with path aliases
-  vitest.config.js                    # Vitest test runner config
-  playwright.config.js                # Playwright E2E test config
-  capacitor.config.json               # Capacitor mobile config
-  src/
-    main.jsx                          # React entry point
-    App.jsx                           # Root component (step 1/2 views)
-    index.css                         # Tailwind CSS + custom styles
-    store/
-      subscriptionStore.js            # Zustand store (subs CRUD, persistence)
-      currencyStore.js                # Zustand store (currency, exchange rates)
-      settingsStore.js                # Zustand store (theme, persistence)
-    features/
-      subscriptions/
-        SubscriptionList.jsx          # Subscription card list
-        SubscriptionCard.jsx          # Individual subscription card
-        AddSubscriptionModal.jsx      # Add/edit subscription form modal
-      budget/
-        BudgetIndicator.jsx           # Dashboard budget progress bar
-        BudgetSettings.jsx            # Budget amount settings UI
-        useBudget.js                  # Budget logic (get/set/thresholds)
-      reminders/
-        UpcomingRenewals.jsx          # Upcoming renewal list
-        useReminders.js               # Renewal calculation logic
-      trends/
-        TrendsSection.jsx             # Trends dashboard section
-        useTrends.js                  # Trend analysis (MoM, YoY, export)
-      visualizations/
-        TreemapView.jsx               # Treemap chart
-        BeeswarmView.jsx              # Beeswarm chart
-        CirclePackView.jsx            # Circle pack chart
-        ViewToggle.jsx                # Visualization switcher
-      settings/
-        SettingsModal.jsx             # Settings modal (theme, currency, budget)
-        ThemeToggle.jsx               # Dark/light mode toggle
-      presets/
-        PresetsGrid.jsx               # Quick-add preset grid
-      sync/
-        GoogleSheetsSettings.jsx      # Sheets connection UI
-        SyncIndicator.jsx             # Sync status indicator
-        sheetsApi.js                  # Google Sheets CSV reader
-        syncManager.js                # Sync orchestration + conflict resolution
-        offlineQueue.js               # Offline change queue with retry
-        useSheetsSync.js              # Sheets sync hook
-    shared/
-      ui/
-        Modal.jsx                     # Reusable modal component
-        ColorPicker.jsx               # Color picker component
-        CurrencySelect.jsx            # Currency dropdown component
-      hooks/
-        useTheme.js                   # Theme application hook
-      lib/
-        categories.js                 # Category definitions + auto-detection
-        currencies.js                 # Currency formatting + conversion
-        constants.js                  # Colors, logo API config
-        presets.js                    # Preset subscription templates
-        utils.js                     # escapeHtml, extractDomain, etc.
-        analytics.js                 # Client analytics
-        csvParser.js                 # CSV parsing utilities
-        treemapLayout.js             # Treemap layout algorithm
-        beeswarmLayout.js            # Beeswarm layout algorithm
-        circlepackLayout.js          # Circle pack layout algorithm
-    test/
-      setup.js                       # Vitest setup (localStorage mock, etc.)
-  e2e/
-    app.spec.js                       # Playwright E2E tests (28 tests)
+src/
+  main.jsx                          # React entry point
+  App.jsx                           # Root component (step 1/2 views)
+  index.css                         # Tailwind CSS + custom styles
+  store/
+    subscriptionStore.js            # Zustand store (subs CRUD, income, persistence)
+    currencyStore.js                # Zustand store (currency, exchange rates, IP detection)
+    settingsStore.js                # Zustand store (theme, persistence)
+  features/
+    subscriptions/
+      SubscriptionList.jsx          # Subscription card list
+      SubscriptionCard.jsx          # Individual subscription card
+      AddSubscriptionModal.jsx      # Add/edit subscription form modal
+    budget/
+      BudgetIndicator.jsx           # Dashboard budget progress bar
+      BudgetSettings.jsx            # Budget amount settings UI
+      useBudget.js                  # Budget logic (get/set/thresholds)
+    reminders/
+      UpcomingRenewals.jsx          # Upcoming renewal list
+      useReminders.js               # Renewal calculation logic
+    trends/
+      TrendsSection.jsx             # Trends dashboard section
+      useTrends.js                  # Trend analysis (MoM, YoY, export)
+    visualizations/
+      TreemapView.jsx               # Treemap chart
+      BeeswarmView.jsx              # Beeswarm chart
+      CirclePackView.jsx            # Circle pack chart
+      SankeyView.jsx                # Sankey diagram (income flow)
+      ViewToggle.jsx                # Visualization switcher
+    settings/
+      SettingsModal.jsx             # Settings modal (theme, currency, income, budget)
+      ThemeToggle.jsx               # Dark/light mode toggle
+    presets/
+      PresetsGrid.jsx               # Quick-add preset grid
+    sync/
+      GoogleSheetsSettings.jsx      # Sheets connection UI
+      SyncIndicator.jsx             # Sync status indicator
+      sheetsApi.js                  # Google Sheets CSV reader
+      syncManager.js                # Sync orchestration + conflict resolution
+      offlineQueue.js               # Offline change queue with retry
+      useSheetsSync.js              # Sheets sync hook
+  shared/
+    ui/
+      Modal.jsx                     # Reusable modal component
+      ColorPicker.jsx               # Color picker component
+      CurrencySelect.jsx            # Currency dropdown component
+    hooks/
+      useTheme.js                   # Theme application hook
+    lib/
+      categories.js                 # Category definitions + auto-detection
+      currencies.js                 # Currency formatting + conversion
+      constants.js                  # Colors, logo API config
+      presets.js                    # Preset subscription templates
+      utils.js                     # escapeHtml, extractDomain, etc.
+      analytics.js                 # Client analytics
+      csvParser.js                 # CSV parsing utilities
+      treemapLayout.js             # Treemap layout algorithm
+      beeswarmLayout.js            # Beeswarm layout algorithm
+      circlepackLayout.js          # Circle pack layout algorithm
+      sankeyLayout.js              # Sankey diagram layout algorithm
+  test/
+    setup.js                       # Vitest setup (localStorage mock, etc.)
+e2e/
+  app.spec.js                       # Playwright E2E tests (28 tests)
 ```
 
 ## Testing
@@ -206,13 +203,13 @@ Capacitor plugins included: Local Notifications, Splash Screen, Status Bar.
 
 ## Deployment
 
-SubGrid deploys to **Cloudflare Pages** from the Vite `dist/` output.
+Chameleon deploys to **Cloudflare Pages** from the Vite `dist/` output.
 
 ### Manual Deploy
 
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=abdull-finance
+npx wrangler pages deploy dist --project-name=chameleonfinance
 ```
 
 ### CI/CD with GitHub Actions

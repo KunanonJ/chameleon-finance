@@ -5,12 +5,12 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('text=SubGrid');
+  await page.waitForSelector('text=Chameleon');
 });
 
 test.describe('App loads', () => {
   test('shows header and empty state', async ({ page }) => {
-    await expect(page.locator('h1')).toHaveText('SubGrid');
+    await expect(page.locator('h1')).toHaveText('Chameleon');
     await expect(page.locator('text=No subscriptions yet')).toBeVisible();
     await expect(page.locator('text=Add your first subscription to get started')).toBeVisible();
   });
@@ -350,7 +350,7 @@ test.describe('Full User Flow', () => {
 
     // Reload the page
     await page.reload();
-    await page.waitForSelector('text=SubGrid');
+    await page.waitForSelector('text=Chameleon');
 
     // Subscription should still be there
     await expect(page.locator('.truncate.font-bold:has-text("PersistTest")')).toBeVisible();

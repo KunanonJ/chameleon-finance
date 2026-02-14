@@ -176,7 +176,7 @@ export function useTrends() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'subgrid-trends-' + new Date().toISOString().split('T')[0] + '.csv';
+    link.download = 'chameleon-trends-' + new Date().toISOString().split('T')[0] + '.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

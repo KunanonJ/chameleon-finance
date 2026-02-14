@@ -1,6 +1,6 @@
 {
-  "appId": "com.subgrid.app",
-  "appName": "SubGrid",
+  "appId": "com.chameleon.app",
+  "appName": "Chameleon",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

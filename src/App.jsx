@@ -83,7 +83,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'subgrid-' + new Date().toISOString().split('T')[0] + '.csv';
+    link.download = 'chameleon-' + new Date().toISOString().split('T')[0] + '.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -95,7 +95,7 @@ export default function App() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">SubGrid</h1>
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">Chameleon</h1>
           <div className="mt-1 flex items-center gap-3">
             <p className="text-sm text-slate-400">Subscription Cost Visualizer</p>
             <SyncIndicator />

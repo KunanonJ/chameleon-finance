@@ -1,6 +1,6 @@
 /**
  * Bidirectional Sync Manager
- * Orchestrates pulling data between SubGrid and Google Sheets
+ * Orchestrates pulling data between Chameleon and Google Sheets
  */
 
 import * as SheetsAPI from './sheetsApi';
