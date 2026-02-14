@@ -200,13 +200,19 @@ export async function readFinancialRecords(spreadsheetId, sheetTab = 'Sheet1') {
 
   return dataRows.map((row, i) => {
     const get = (name) => (col(name) >= 0 ? row[col(name)] : '') || '';
-    const getNum = (name) => parseFloat(get(name)) || 0;
+    const getNum = (name) => {
+      const raw = get(name);
+      if (!raw) return 0;
+      // Strip currency symbols, commas, spaces — keep digits, dot, minus
+      const cleaned = raw.replace(/[^0-9.\-]/g, '');
+      return parseFloat(cleaned) || 0;
+    };
 
     return {
       id: `sheet_${i}_${Date.now()}`,
       date: get('date'),
       description: get('description'),
-      interestRate: getNum('interest rate') || getNum('interestrate') || getNum('interest rate (%)'),
+      interestRate: getNum('interest rate') || getNum('interested rate') || getNum('interestrate') || getNum('interest rate (%)'),
       income: getNum('income'),
       expenses: getNum('expenses'),
       minimumExpenses: getNum('minimum expenses') || getNum('minimumexpenses') || getNum('min expenses'),
@@ -214,7 +220,7 @@ export async function readFinancialRecords(spreadsheetId, sheetTab = 'Sheet1') {
       dueDate: get('due date') || get('duedate'),
       paymentMethod: get('payment method') || get('paymentmethod'),
       howPaid: get('how paid') || get('howpaid') || get('how i paid?'),
-      done: ['true', 'yes'].includes(get('done').toLowerCase()),
+      done: ['true', 'yes'].includes((get('done') || get('done?')).toLowerCase()),
       type: get('type'),
       note: get('note') || get('notes'),
       lastModified: new Date().toISOString(),
