@@ -60,7 +60,7 @@ Open `http://localhost:5173`.
 ## Testing
 
 Current baseline:
-- Vitest: `240/240` passing
+- Vitest: `242/242` passing
 - Playwright E2E: `54/54` passing
 
 Run locally:
@@ -89,7 +89,9 @@ Create tabs named exactly:
 - `Trends`
 
 ### Finance Import
-- Finance tab reads from sheet tab: `Sheet1`
+- Finance sync uses the connected sheet URL tab:
+  - if URL contains `gid=...`, it syncs that tab
+  - otherwise it falls back to `Sheet1`
 - Recommended template copy URL:
   - [https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy](https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy)
 - Import rules:

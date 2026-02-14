@@ -8,6 +8,7 @@ This file is a practical snapshot for the next AI/dev to continue work quickly.
 - Repo: `https://github.com/KunanonJ/chameleon-finance`
 - Production: `https://chameleon-finance.pages.dev`
 - Current branch: `main`
+- Current release commit: `d452d9b`
 - Updated at: `2026-02-14`
 
 ## 2. What the App Does
@@ -43,6 +44,9 @@ Chameleon has two main tabs:
 - Line charts updated to monthly overview:
   - subscription line chart now shows monthly totals (last 12 months)
   - finance line chart now shows 12 months including zero-value months
+- Finance sync now supports tab-level URL targeting:
+  - if connected URL includes `gid=...`, finance import reads that tab
+  - otherwise finance import defaults to `Sheet1`
 
 ## 4. Core Tech and Commands
 
@@ -68,7 +72,7 @@ npm run test:e2e
 
 Latest verified baseline in this workspace:
 
-- Vitest: `240/240` passing
+- Vitest: `242/242` passing
 - Playwright E2E: `54/54` passing
 
 Important note:
@@ -119,8 +123,9 @@ Main localStorage keys:
 - Header-row auto detection
 - Fallback index mapping retained for older templates
 - Numeric parsing handles commas, symbols, and locale variants
-
-Expected finance tab name: `Sheet1`
+- Finance tab selection rules:
+  - if connected Google Sheets URL contains `gid=...`, that tab is used
+  - otherwise fallback tab is `Sheet1`
 
 Finance template copy URL:
 `https://docs.google.com/spreadsheets/d/1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo/copy`
