@@ -12,6 +12,8 @@ export default function SettingsModal({ isOpen, onClose }) {
   const setCurrency = useCurrencyStore((s) => s.setCurrency);
   const subs = useSubscriptionStore((s) => s.subs);
   const setSubs = useSubscriptionStore((s) => s.setSubs);
+  const income = useSubscriptionStore((s) => s.income);
+  const setIncome = useSubscriptionStore((s) => s.setIncome);
 
   const handleExport = useCallback(() => {
     const data = JSON.stringify(subs, null, 2);
@@ -63,6 +65,24 @@ export default function SettingsModal({ isOpen, onClose }) {
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-slate-700">Display Currency</label>
           <CurrencySelect value={selectedCurrency} onChange={setCurrency} className="w-full" />
+        </div>
+
+        {/* Monthly Income */}
+        <div className="border-t border-slate-100 pt-4">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Monthly Income</label>
+          <p className="mb-2 text-xs text-slate-400">Used in the Sankey diagram to show income vs expenses</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="any"
+              placeholder="e.g. 5000"
+              value={income || ''}
+              onChange={(e) => setIncome(parseFloat(e.target.value) || 0)}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+            <span className="text-sm font-medium text-slate-500">{selectedCurrency}</span>
+          </div>
         </div>
 
         {/* Budget */}

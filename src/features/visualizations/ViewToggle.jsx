@@ -19,6 +19,16 @@ const views = [
       <circle cx="15" cy="14" r="3" strokeWidth={1.5} />
     </svg>
   )},
+  { id: 'sankey', label: 'Sankey', icon: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <rect x="1" y="4" width="4" height="16" rx="1" />
+      <rect x="10" y="3" width="4" height="7" rx="1" />
+      <rect x="10" y="14" width="4" height="7" rx="1" />
+      <rect x="19" y="6" width="4" height="12" rx="1" />
+      <path d="M5 8 C8 8 8 6 10 6" strokeLinecap="round" fill="none" />
+      <path d="M5 16 C8 16 8 18 10 18" strokeLinecap="round" fill="none" />
+    </svg>
+  )},
 ];
 
 export default function ViewToggle({ currentView, onViewChange }) {

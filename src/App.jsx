@@ -11,6 +11,7 @@ import PresetsGrid from '@features/presets/PresetsGrid';
 import TreemapView from '@features/visualizations/TreemapView';
 import BeeswarmView from '@features/visualizations/BeeswarmView';
 import CirclePackView from '@features/visualizations/CirclePackView';
+import SankeyView from '@features/visualizations/SankeyView';
 import ViewToggle from '@features/visualizations/ViewToggle';
 import BudgetIndicator from '@features/budget/BudgetIndicator';
 import TrendsSection from '@features/trends/TrendsSection';
@@ -181,6 +182,7 @@ export default function App() {
           {currentView === 'treemap' && <TreemapView />}
           {currentView === 'beeswarm' && <BeeswarmView />}
           {currentView === 'circlepack' && <CirclePackView />}
+          {currentView === 'sankey' && <SankeyView />}
 
           {/* Budget */}
           <BudgetIndicator />

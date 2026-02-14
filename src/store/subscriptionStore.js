@@ -7,6 +7,7 @@ export const useSubscriptionStore = create(
       subs: [],
       step: 1,
       currentView: 'treemap',
+      income: 0,
 
       addSub: (sub) => set((state) => ({
         subs: [...state.subs, {
@@ -33,28 +34,34 @@ export const useSubscriptionStore = create(
       setStep: (step) => set({ step }),
 
       setView: (currentView) => set({ currentView }),
+
+      setIncome: (income) => set({ income }),
     }),
     {
       name: 'vexly_flow_data',
-      // Custom storage to match legacy format (array, not object)
+      // Custom storage to handle legacy format (raw array) and new format (object with income)
       storage: {
         getItem: (name) => {
           const raw = localStorage.getItem(name);
           if (!raw) return null;
           try {
             const parsed = JSON.parse(raw);
-            // Legacy format is raw array, new format is Zustand state object
+            // Legacy format: raw array of subs
             if (Array.isArray(parsed)) {
-              return { state: { subs: parsed, step: 1, currentView: 'treemap' } };
+              return { state: { subs: parsed, step: 1, currentView: 'treemap', income: 0 } };
             }
-            return { state: parsed };
+            // New format: { subs, income }
+            if (parsed && Array.isArray(parsed.subs)) {
+              return { state: { subs: parsed.subs, step: 1, currentView: 'treemap', income: parsed.income || 0 } };
+            }
+            return null;
           } catch {
             return null;
           }
         },
         setItem: (name, value) => {
-          // Save subs as raw array for backward compat with legacy app
-          localStorage.setItem(name, JSON.stringify(value.state.subs));
+          const { subs, income } = value.state;
+          localStorage.setItem(name, JSON.stringify({ subs, income }));
         },
         removeItem: (name) => localStorage.removeItem(name),
       },
@@ -62,6 +69,7 @@ export const useSubscriptionStore = create(
         subs: state.subs,
         step: state.step,
         currentView: state.currentView,
+        income: state.income,
       }),
     }
   )

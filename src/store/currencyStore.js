@@ -5,6 +5,7 @@ import { defaultCurrencies } from '@shared/lib/constants';
 const CACHE_KEY = 'vexly_exchangeRates';
 const DATE_KEY = 'vexly_ratesLastUpdate';
 const CURRENCY_KEY = 'vexly_currency';
+const GEO_DETECTED_KEY = 'vexly_geoCurrencyDetected';
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
 export const useCurrencyStore = create(
@@ -27,6 +28,17 @@ export const useCurrencyStore = create(
             });
             return { currencies: updated };
           });
+        }
+
+        // Auto-detect currency from IP on first visit
+        const hasSavedCurrency = localStorage.getItem(CURRENCY_KEY);
+        const alreadyDetected = localStorage.getItem(GEO_DETECTED_KEY);
+        if (!hasSavedCurrency && !alreadyDetected) {
+          const detectedCurrency = await detectCurrencyFromIP();
+          if (detectedCurrency && defaultCurrencies[detectedCurrency]) {
+            set({ selectedCurrency: detectedCurrency });
+          }
+          localStorage.setItem(GEO_DETECTED_KEY, '1');
         }
       },
     }),
@@ -114,5 +126,47 @@ async function loadRates() {
       console.warn('Failed to fetch rates, falling back to hardcoded rates.');
     }
     return refreshedRates;
+  }
+}
+
+// Country code → currency code mapping
+const COUNTRY_TO_CURRENCY = {
+  US: 'USD', GB: 'GBP', CA: 'CAD', AU: 'AUD', NZ: 'NZD',
+  JP: 'JPY', CN: 'CNY', KR: 'KRW', IN: 'INR', CH: 'CHF',
+  HK: 'HKD', SG: 'SGD', SE: 'SEK', NO: 'NOK', DK: 'DKK',
+  MX: 'MXN', BR: 'BRL', ZA: 'ZAR', RU: 'RUB', TR: 'TRY',
+  PL: 'PLN', TH: 'THB', ID: 'IDR', MY: 'MYR', PH: 'PHP',
+  VN: 'VND', TW: 'TWD', AE: 'AED', SA: 'SAR', IL: 'ILS',
+  CZ: 'CZK', HU: 'HUF', RO: 'RON', BG: 'BGN', HR: 'HRK',
+  CL: 'CLP', CO: 'COP', AR: 'ARS', PE: 'PEN', EG: 'EGP',
+  NG: 'NGN', KE: 'KES', PK: 'PKR', BD: 'BDT', UA: 'UAH',
+  // Eurozone countries
+  DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR',
+  BE: 'EUR', AT: 'EUR', PT: 'EUR', IE: 'EUR', FI: 'EUR',
+  GR: 'EUR', SK: 'EUR', SI: 'EUR', LT: 'EUR', LV: 'EUR',
+  EE: 'EUR', LU: 'EUR', MT: 'EUR', CY: 'EUR',
+};
+
+async function detectCurrencyFromIP() {
+  try {
+    const response = await fetch('https://ipapi.co/json/', {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+
+    // ipapi.co returns a 'currency' field directly
+    if (data.currency && defaultCurrencies[data.currency]) {
+      return data.currency;
+    }
+
+    // Fallback: map country code to currency
+    if (data.country_code && COUNTRY_TO_CURRENCY[data.country_code]) {
+      return COUNTRY_TO_CURRENCY[data.country_code];
+    }
+
+    return null;
+  } catch {
+    return null;
   }
 }
