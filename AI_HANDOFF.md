@@ -8,8 +8,7 @@ This file is a practical snapshot for the next AI/dev to continue work quickly.
 - Repo: `https://github.com/KunanonJ/chameleon-finance`
 - Production: `https://chameleon-finance.pages.dev`
 - Current branch: `main`
-- Last known commit when this handoff was updated: `d3a1d15`
-- Updated at: `2026-02-14 19:14 +07`
+- Updated at: `2026-02-14`
 
 ## 2. What the App Does
 
@@ -37,6 +36,13 @@ Chameleon has two main tabs:
 - Finance import auto-detects header row (works when users add a title row above headers).
 - Global button hover style now uses a card-like shadow feel.
 - Buy Me a Coffee button exists in header near settings.
+- Auto Google Sheets sync added:
+  - on app load
+  - every 5 minutes
+  - on network restore / window focus / tab visibility return
+- Line charts updated to monthly overview:
+  - subscription line chart now shows monthly totals (last 12 months)
+  - finance line chart now shows 12 months including zero-value months
 
 ## 4. Core Tech and Commands
 
@@ -81,6 +87,9 @@ Important note:
   - `src/features/sync/sheetsApi.js`
   - `src/features/finance/useFinanceSheetsSync.js`
   - `src/features/sync/useSheetsSync.js`
+- Line chart implementations:
+  - `src/features/visualizations/LineView.jsx`
+  - `src/features/finance/FinanceLineView.jsx`
 - State:
   - `src/store/financeStore.js`
   - `src/store/subscriptionStore.js`
@@ -141,4 +150,4 @@ npx wrangler pages deployment list --project-name=chameleon-finance
 
 1. Add explicit UI hint after finance sync when imported values are all zero (data-quality warning).
 2. Add one more E2E for finance sheet import header variants.
-3. Consider code-splitting charts to reduce bundle-size warning.
+3. Consider code-splitting chart views to reduce bundle-size warning.

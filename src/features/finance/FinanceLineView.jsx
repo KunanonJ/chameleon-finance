@@ -6,6 +6,8 @@ import { formatCurrency } from '@shared/lib/currencies';
 import { computeMonthlyTrend } from '@shared/lib/financeUtils';
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@shared/ui/Chart';
 
+const MONTHS_TO_SHOW = 12;
+
 export default function FinanceLineView() {
   const records = useFinanceStore((s) => s.records);
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
@@ -13,13 +15,21 @@ export default function FinanceLineView() {
 
   const data = useMemo(() => {
     const trend = computeMonthlyTrend(records);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return trend.map((m) => {
-      const [y, mo] = m.month.split('-');
+    const trendMap = new Map(trend.map((entry) => [entry.month, entry]));
+    const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' });
+
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - (MONTHS_TO_SHOW - 1), 1);
+
+    return Array.from({ length: MONTHS_TO_SHOW }, (_, i) => {
+      const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+      const bucket = trendMap.get(key);
       return {
-        name: `${months[parseInt(mo) - 1]} ${y}`,
-        income: m.income,
-        expenses: m.expenses,
+        name: monthFormatter.format(monthDate),
+        income: bucket?.income || 0,
+        expenses: bucket?.expenses || 0,
       };
     });
   }, [records]);
@@ -40,9 +50,13 @@ export default function FinanceLineView() {
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
         <XAxis
           dataKey="name"
-          tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+          tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
           axisLine={{ stroke: 'var(--border-primary)' }}
           tickLine={false}
+          interval={0}
+          angle={-35}
+          textAnchor="end"
+          height={60}
         />
         <YAxis
           tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}

@@ -12,6 +12,7 @@ Chameleon is a personal finance web app for tracking subscriptions and day-to-da
 - Add and manage financial records (Income, Utility, Loan, Credit Card)
 - Summary cards for total income, expenses, minimum expenses, and net balance
 - Dashboard views: Bar, Line, Pie/Donut, Area, Treemap, Sankey
+- Line chart optimized for monthly overview (last 12 months, including zero-value months)
 - Brand icon support on records (auto-detect via domain/logo API)
 - Google Sheets finance import with header-based mapping
 - Clear All button with two-click confirmation
@@ -19,6 +20,7 @@ Chameleon is a personal finance web app for tracking subscriptions and day-to-da
 ### Subscription Tracker
 - Add/edit/delete subscriptions with category, cycle, and currency
 - Dashboard with charts and Sankey flow
+- Line chart optimized for monthly overview (last 12 months)
 - Budget indicator and trends
 - Renewal reminders
 - Preset quick-add cards
@@ -27,6 +29,7 @@ Chameleon is a personal finance web app for tracking subscriptions and day-to-da
 - Light/Dark theme
 - Hover card shadow on interactive buttons
 - Google Sheets sync support
+- Auto Google Sheets sync (on app start, every 5 minutes, and when back online/focused)
 - iOS/Android support via Capacitor
 
 ## Quick Start
@@ -70,6 +73,14 @@ npm run test:e2e
 ## Google Sheets Sync
 
 No API key is required. Sheets must be shared as **Anyone with the link can view**.
+
+### Auto Sync Behavior
+- Runs automatically when connected:
+  - on app load
+  - every 5 minutes in background
+  - when network is restored (`online`)
+  - when window/tab returns to focus
+- Manual sync button is still available in the UI.
 
 ### Subscription/Budget/Trend Tabs
 Create tabs named exactly:

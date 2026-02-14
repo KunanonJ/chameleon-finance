@@ -5,23 +5,49 @@ import { useCurrencyStore } from '@store/currencyStore';
 import { toMonthly, formatCurrency } from '@shared/lib/currencies';
 import { ChartContainer, ChartTooltipContent } from '@shared/ui/Chart';
 
+const MONTHS_TO_SHOW = 12;
+
 export default function LineView() {
   const subs = useSubscriptionStore((s) => s.subs);
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
 
   const data = useMemo(() => {
-    const sorted = subs
-      .map((sub) => ({
-        name: sub.name,
-        cost: toMonthly(sub, selectedCurrency, currencies),
-      }))
-      .sort((a, b) => b.cost - a.cost);
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - (MONTHS_TO_SHOW - 1), 1);
+    const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' });
 
-    let cumulative = 0;
-    return sorted.map((s) => {
-      cumulative += s.cost;
-      return { name: s.name, cost: s.cost, cumulative };
+    const parsedSubs = subs.map((sub) => {
+      const monthly = toMonthly(sub, selectedCurrency, currencies);
+      const start = sub.startDate ? new Date(sub.startDate) : null;
+      const startMonthDate = start && !Number.isNaN(start.getTime())
+        ? new Date(start.getFullYear(), start.getMonth(), 1)
+        : null;
+      return { monthly, startMonthDate };
+    });
+
+    return Array.from({ length: MONTHS_TO_SHOW }, (_, i) => {
+      const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+
+      let total = 0;
+      let activeSubscriptions = 0;
+
+      for (const sub of parsedSubs) {
+        const isActive = !sub.startMonthDate || sub.startMonthDate <= monthDate;
+        if (isActive) {
+          total += sub.monthly;
+          activeSubscriptions += 1;
+        }
+      }
+
+      return {
+        monthKey,
+        name: monthFormatter.format(monthDate),
+        total: Math.round(total * 100) / 100,
+        activeSubscriptions,
+      };
     });
   }, [subs, selectedCurrency, currencies]);
 
@@ -45,9 +71,9 @@ export default function LineView() {
           axisLine={{ stroke: 'var(--border-primary)' }}
           tickLine={false}
           interval={0}
-          angle={data.length > 5 ? -30 : 0}
-          textAnchor={data.length > 5 ? 'end' : 'middle'}
-          height={data.length > 5 ? 60 : 30}
+          angle={-35}
+          textAnchor="end"
+          height={60}
         />
         <YAxis
           tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
@@ -58,10 +84,10 @@ export default function LineView() {
         <Tooltip content={<ChartTooltipContent formatter={fmt} />} />
         <Line
           type="monotone"
-          dataKey="cumulative"
-          name="Cumulative"
+          dataKey="total"
+          name="Monthly Total"
           stroke="var(--chart-1)"
-          strokeWidth={2}
+          strokeWidth={2.5}
           dot={{ r: 4, fill: 'var(--chart-1)' }}
           activeDot={{ r: 6 }}
         />
