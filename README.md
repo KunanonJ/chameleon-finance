@@ -242,6 +242,10 @@ Required GitHub secrets (`Settings > Secrets and variables > Actions`):
 - **Hosting**: Cloudflare Pages
 - **Sync**: Google Sheets (public CSV export)
 
+## Acknowledgments
+
+Inspired by [SubGrid](https://github.com/hoangvu12/subgrid) by hoangvu12.
+
 ## License
 
 MIT
