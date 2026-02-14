@@ -3,11 +3,12 @@ import { useCurrencyStore } from '@store/currencyStore';
 import { formatCurrency } from '@shared/lib/currencies';
 import { computeSummary } from '@shared/lib/financeUtils';
 
-export default function FinanceSummary() {
-  const records = useFinanceStore((s) => s.records);
+export default function FinanceSummary({ records: recordsProp }) {
+  const storeRecords = useFinanceStore((s) => s.records);
   const filters = useFinanceStore((s) => s.filters);
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
+  const records = recordsProp || storeRecords;
 
   const summary = computeSummary(records, filters);
 

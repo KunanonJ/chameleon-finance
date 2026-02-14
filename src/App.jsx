@@ -21,9 +21,11 @@ import UpcomingRenewals from '@features/reminders/UpcomingRenewals';
 import SyncIndicator from '@features/sync/SyncIndicator';
 import SettingsModal from '@features/settings/SettingsModal';
 import FinanceSection from '@features/finance/FinanceSection';
+import { useAutoSync } from '@features/sync/useAutoSync';
 
 export default function App() {
   useTheme();
+  useAutoSync();
 
   const subs = useSubscriptionStore((s) => s.subs);
   const step = useSubscriptionStore((s) => s.step);

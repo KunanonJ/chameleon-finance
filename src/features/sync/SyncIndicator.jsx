@@ -1,16 +1,20 @@
 import { useSheetsSync } from '@features/sync/useSheetsSync';
+import { useAutoSyncStore } from '@store/autoSyncStore';
 
 export default function SyncIndicator() {
-  const { syncStatus, isConnected, lastSyncTime } = useSheetsSync();
+  const { syncStatus, isConnected } = useSheetsSync();
+  const autoSyncEnabled = useAutoSyncStore((s) => s.autoSyncEnabled);
 
   const connected = isConnected();
 
   if (!connected) return null;
 
+  const idleText = autoSyncEnabled ? 'Auto-synced' : 'Synced';
+
   const statusConfig = {
     idle: {
       dot: 'bg-green-500 animate-pulse',
-      text: 'Synced',
+      text: idleText,
       textColor: 'text-green-600 animate-pulse',
     },
     syncing: {

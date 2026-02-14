@@ -11,8 +11,9 @@ import FinancePieView from '@features/finance/FinancePieView';
 import FinanceAreaView from '@features/finance/FinanceAreaView';
 import FinanceSankeyView from '@features/finance/FinanceSankeyView';
 
-export default function FinanceDashboard({ currentView }) {
-  const records = useFinanceStore((s) => s.records);
+export default function FinanceDashboard({ currentView, records: recordsProp }) {
+  const storeRecords = useFinanceStore((s) => s.records);
+  const records = recordsProp || storeRecords;
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
 
@@ -46,12 +47,12 @@ export default function FinanceDashboard({ currentView }) {
   return (
     <div className="space-y-6">
       {/* Visualization */}
-      {currentView === 'bar' && <FinanceBarView />}
-      {currentView === 'line' && <FinanceLineView />}
-      {currentView === 'pie' && <FinancePieView />}
-      {currentView === 'area' && <FinanceAreaView />}
-      {currentView === 'treemap' && <FinanceTreemapView />}
-      {currentView === 'sankey' && <FinanceSankeyView />}
+      {currentView === 'bar' && <FinanceBarView records={records} />}
+      {currentView === 'line' && <FinanceLineView records={records} />}
+      {currentView === 'pie' && <FinancePieView records={records} />}
+      {currentView === 'area' && <FinanceAreaView records={records} />}
+      {currentView === 'treemap' && <FinanceTreemapView records={records} />}
+      {currentView === 'sankey' && <FinanceSankeyView records={records} />}
 
       {/* Breakdown by Type */}
       <div className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">

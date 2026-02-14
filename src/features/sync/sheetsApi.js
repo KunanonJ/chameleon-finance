@@ -227,3 +227,22 @@ export async function readFinancialRecords(spreadsheetId, sheetTab = 'Sheet1') {
     };
   }).filter(r => r.date && r.description);
 }
+
+/**
+ * Read financial records from multiple monthly sheet tabs
+ * Fetches each tab sequentially, skips tabs that don't exist or are empty
+ */
+export async function readAllMonthlyRecords(spreadsheetId, monthTabs, onProgress) {
+  const allRecords = [];
+  for (let i = 0; i < monthTabs.length; i++) {
+    const tab = monthTabs[i];
+    if (onProgress) onProgress({ current: i + 1, total: monthTabs.length, tab });
+    try {
+      const records = await readFinancialRecords(spreadsheetId, tab);
+      allRecords.push(...records);
+    } catch (err) {
+      console.warn(`Skipping tab "${tab}":`, err.message);
+    }
+  }
+  return allRecords;
+}
