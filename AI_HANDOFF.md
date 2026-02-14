@@ -19,6 +19,7 @@
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | UI | React | 19 |
+| Charts | Recharts | 2 |
 | Build | Vite | 7 |
 | Styling | Tailwind CSS | v4 (via `@tailwindcss/vite` plugin) |
 | State | Zustand | 5 (with persist middleware) |
@@ -48,14 +49,14 @@ App.jsx (tab router: Finance Tracker | Subscriptions)
 │   │   └── FinanceRecordCard (clickable, color bar, custom icon)
 │   ├── Dashboard (step 2)
 │   │   ├── ViewToggle
-│   │   └── FinanceTreemapView / FinanceBeeswarmView / FinanceCirclePackView / FinanceSankeyView
+│   │   └── FinanceBarView / FinanceLineView / FinancePieView / FinanceAreaView / FinanceTreemapView / FinanceSankeyView
 │   └── FinanceRecordModal (icon upload, color picker, all finance fields)
 ├── Subscriptions Tab (step 1: list, step 2: dashboard)
 │   ├── SubscriptionList → SubscriptionCard[]
 │   ├── PresetsGrid (quick-add)
 │   ├── Dashboard (step 2)
 │   │   ├── ViewToggle
-│   │   ├── TreemapView / BeeswarmView / CirclePackView / SankeyView
+│   │   ├── BarView / LineView / PieView / AreaView / TreemapView / SankeyView
 │   │   ├── BudgetIndicator
 │   │   ├── TrendsSection
 │   │   └── UpcomingRenewals
@@ -243,7 +244,21 @@ Computes from filtered records:
 
 ## Visualizations
 
-All 4 visualizations follow the same pattern:
+### Recharts-Based Views (Bar, Line, Pie, Area)
+
+All 4 Recharts views follow a consistent pattern using the shared `Chart.jsx` components:
+
+1. Data from Zustand stores → `useMemo` for computation
+2. `ChartContainer` wraps a Recharts `ResponsiveContainer` with styled card
+3. `ChartTooltipContent` provides themed tooltips
+4. `ChartLegendContent` provides themed legends
+5. CSS variables (`--chart-1` through `--chart-5`) for theme-aware chart colors
+
+**Shared chart file**: `src/shared/ui/Chart.jsx` -- `ChartContainer`, `ChartTooltipContent`, `ChartLegendContent`
+
+### Custom Views (Treemap, Sankey)
+
+The treemap and Sankey views use custom layout algorithms:
 
 1. `useRef` for container element
 2. `useState` for responsive dimensions
@@ -256,8 +271,6 @@ All 4 visualizations follow the same pattern:
 | File | Algorithm |
 |------|-----------|
 | `treemapLayout.js` | Squarified treemap (rectangular subdivisions by cost) |
-| `beeswarmLayout.js` | Force simulation placing circles on x-axis by cost |
-| `circlepackLayout.js` | Hierarchical circle packing |
 | `sankeyLayout.js` | Flow diagram: income → categories → subscriptions |
 
 ---
@@ -267,9 +280,10 @@ All 4 visualizations follow the same pattern:
 ### Dark Mode
 
 - Tailwind `dark:` variant classes throughout all components
-- CSS class `dark` toggled on `<html>` element
-- Custom variant defined as `@custom-variant dark (&:where(.dark, .dark *))`
+- Theme applied via `[data-theme="dark"]` attribute on `<html>` element
+- Custom variant defined as `@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *))`
 - System preference respected when theme is null
+- Chart colors use CSS variables (`--chart-1` through `--chart-5`) with separate light/dark values
 
 ### Modal Pattern
 
@@ -343,8 +357,10 @@ src/
       FinanceRecordCard.jsx               # Clickable card with color bar + custom icon
       FinanceRecordModal.jsx              # Add/edit form (icon upload, color picker, all fields)
       FinanceTreemapView.jsx              # Finance treemap visualization
-      FinanceBeeswarmView.jsx             # Finance beeswarm visualization
-      FinanceCirclePackView.jsx           # Finance circle pack visualization
+      FinanceBarView.jsx                  # Finance bar chart (Recharts)
+      FinanceLineView.jsx                 # Finance line chart (Recharts)
+      FinancePieView.jsx                  # Finance pie/donut chart (Recharts)
+      FinanceAreaView.jsx                 # Finance area chart (Recharts)
       FinanceSankeyView.jsx               # Finance 3-column Sankey (income → expenses → breakdown)
       useFinanceSheetsSync.js             # Finance-specific Sheets sync hook
 
@@ -368,8 +384,10 @@ src/
 
     visualizations/
       TreemapView.jsx                     # Treemap chart
-      BeeswarmView.jsx                    # Beeswarm scatter plot
-      CirclePackView.jsx                  # Circle pack chart
+      BarView.jsx                         # Bar chart (Recharts)
+      LineView.jsx                        # Line chart (Recharts)
+      PieView.jsx                         # Pie/donut chart (Recharts)
+      AreaView.jsx                        # Area chart (Recharts)
       SankeyView.jsx                      # Sankey flow diagram
       ViewToggle.jsx                      # Visualization type switcher
 
@@ -397,6 +415,7 @@ src/
       Modal.jsx                           # Base modal (backdrop, escape, scroll lock)
       ColorPicker.jsx                     # 12-color grid picker
       CurrencySelect.jsx                  # Currency dropdown
+      Chart.jsx                           # Recharts wrapper (ChartContainer, ChartTooltipContent, ChartLegendContent)
 
     hooks/
       useTheme.js                         # Theme application to <html>
@@ -412,8 +431,6 @@ src/
       analytics.js                        # Client-side event tracking
       csvParser.js                        # CSV parsing utilities
       treemapLayout.js                    # Treemap layout algorithm
-      beeswarmLayout.js                   # Beeswarm layout algorithm
-      circlepackLayout.js                 # Circle pack layout algorithm
       sankeyLayout.js                     # Sankey layout algorithm
       -- test files --
       categories.test.js                  # 21 tests
@@ -556,6 +573,8 @@ File: `.github/workflows/ci.yml`
 | `e8e0e4d` | Added Treemap, Beeswarm, Circles, and Sankey views to Finance Dashboard |
 | `6891fa2` | Redesigned Finance Sankey to 3-column layout with expense breakdown |
 | `47db69c` | Made finance record cards clickable to open edit modal |
+| -- | Migrated visualizations from custom Beeswarm/CirclePack to Recharts (Bar, Line, Pie, Area) |
+| -- | Redesigned logo to mint green (#00CC99) with friendlier chameleon design |
 
 ---
 
@@ -563,16 +582,20 @@ File: `.github/workflows/ci.yml`
 
 - All features implemented and deployed to production
 - 238 unit tests + 54 E2E tests passing
-- Production build: ~321 KB (gzip: ~95 KB)
+- Production build: ~717 KB (gzip: ~210 KB) -- includes Recharts library
 - Finance Tracker is the default/primary tab
-- Finance dashboard has 4 visualization types (Treemap, Beeswarm, Circles, Sankey)
+- Both dashboards have 6 visualization types: Bar (default), Line, Pie/Donut, Area, Treemap, Sankey
+- Bar, Line, Pie, Area views powered by Recharts; Treemap and Sankey use custom layout algorithms
+- Chart theming via CSS variables (`--chart-1` through `--chart-5`) with light/dark variants
+- Shared chart components in `src/shared/ui/Chart.jsx` (ChartContainer, ChartTooltipContent, ChartLegendContent)
+- Brand color: mint green (#00CC99) -- logo, theme-color, PWA manifest
 - Finance Sankey uses 3-column layout: Total Income → Total Expenses → Expense breakdown + Net Balance
 - Finance records support custom icon upload (base64) and 12-color picker
 - Sankey node text colors adapt to background luminance for readability in light/dark mode
 - All interactive elements have hover shadow effects
 - Sync indicator pulses with animate-pulse animation
 - Google Sheets sync works for both subscriptions and finance records
-- Dark mode works across all components including Sankey text
+- Dark mode works across all components including charts and Sankey text
 - Mobile support via Capacitor (iOS + Android)
 - Date field uses `todayLocal()` helper for timezone-correct local date (not UTC)
 

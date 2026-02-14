@@ -9,8 +9,10 @@ import SubscriptionList from '@features/subscriptions/SubscriptionList';
 import AddSubscriptionModal from '@features/subscriptions/AddSubscriptionModal';
 import PresetsGrid from '@features/presets/PresetsGrid';
 import TreemapView from '@features/visualizations/TreemapView';
-import BeeswarmView from '@features/visualizations/BeeswarmView';
-import CirclePackView from '@features/visualizations/CirclePackView';
+import BarView from '@features/visualizations/BarView';
+import LineView from '@features/visualizations/LineView';
+import PieView from '@features/visualizations/PieView';
+import AreaView from '@features/visualizations/AreaView';
 import SankeyView from '@features/visualizations/SankeyView';
 import ViewToggle from '@features/visualizations/ViewToggle';
 import BudgetIndicator from '@features/budget/BudgetIndicator';
@@ -221,9 +223,11 @@ export default function App() {
           </div>
 
           {/* Visualization */}
+          {currentView === 'bar' && <BarView />}
+          {currentView === 'line' && <LineView />}
+          {currentView === 'pie' && <PieView />}
+          {currentView === 'area' && <AreaView />}
           {currentView === 'treemap' && <TreemapView />}
-          {currentView === 'beeswarm' && <BeeswarmView />}
-          {currentView === 'circlepack' && <CirclePackView />}
           {currentView === 'sankey' && <SankeyView />}
 
           {/* Budget */}

@@ -1,40 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
+      <stop offset="0%" stop-color="#00CC99"/>
+      <stop offset="100%" stop-color="#00B386"/>
     </linearGradient>
     <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#a5b4fc"/>
-      <stop offset="100%" stop-color="#c4b5fd"/>
+      <stop offset="0%" stop-color="#66E6C2"/>
+      <stop offset="100%" stop-color="#99F0D6"/>
     </linearGradient>
   </defs>
   <!-- Rounded square background -->
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- Chameleon body - curved shape -->
-  <path d="M160 340 C140 300 130 250 150 200 C170 150 210 120 260 110 C310 100 350 115 375 145 C400 175 410 215 395 260 C380 305 345 330 310 340 L330 360 C350 375 340 395 315 390 L260 370 C220 365 185 358 160 340Z" fill="url(#body)" opacity="0.95"/>
-  <!-- Chameleon head -->
-  <ellipse cx="365" cy="195" rx="62" ry="55" fill="url(#body)" opacity="0.95"/>
-  <!-- Snout / nose ridge -->
-  <path d="M400 175 C420 168 438 172 445 185 C438 190 420 188 405 188Z" fill="#c7d2fe" opacity="0.8"/>
-  <!-- Eye - outer ring -->
-  <circle cx="378" cy="185" r="22" fill="#1e1b4b"/>
+  <!-- Chameleon body - rounder, friendlier shape -->
+  <path d="M155 330 C135 290 130 240 155 195 C180 150 225 125 275 118 C325 112 360 130 380 160 C400 190 405 230 388 270 C370 310 340 330 305 338 L320 355 C335 368 325 385 305 382 L255 368 C215 362 180 350 155 330Z" fill="url(#body)" opacity="0.95"/>
+  <!-- Chameleon head - bigger and rounder -->
+  <ellipse cx="370" cy="198" rx="68" ry="62" fill="url(#body)" opacity="0.95"/>
+  <!-- Snout - shorter and rounder -->
+  <path d="M410 185 C425 180 435 184 438 193 C432 197 420 195 410 193Z" fill="#99F0D6" opacity="0.8"/>
+  <!-- Friendly smile -->
+  <path d="M405 205 C415 212 425 213 430 208" stroke="#00996B" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <!-- Eye - outer ring (bigger) -->
+  <circle cx="380" cy="188" r="26" fill="#1a3a2e"/>
   <!-- Eye - iris -->
-  <circle cx="378" cy="185" r="16" fill="#fbbf24"/>
+  <circle cx="380" cy="188" r="19" fill="#fbbf24"/>
   <!-- Eye - pupil (vertical slit) -->
-  <ellipse cx="378" cy="185" rx="5" ry="14" fill="#1e1b4b"/>
+  <ellipse cx="380" cy="188" rx="5.5" ry="16" fill="#1a3a2e"/>
   <!-- Eye - highlight -->
-  <circle cx="372" cy="179" r="5" fill="white" opacity="0.8"/>
-  <!-- Crest / head ridge -->
-  <path d="M340 148 C350 125 370 115 390 120 C385 135 375 145 360 152Z" fill="#818cf8" opacity="0.7"/>
-  <!-- Curled tail -->
-  <path d="M160 340 C140 355 125 380 130 400 C135 420 155 430 170 425 C185 420 190 400 182 385 C174 370 160 365 155 358" stroke="#c4b5fd" stroke-width="18" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <circle cx="373" cy="181" r="6" fill="white" opacity="0.85"/>
+  <!-- Small crest -->
+  <path d="M338 155 C345 135 362 128 378 132 C374 145 365 152 352 158Z" fill="#33D4A8" opacity="0.6"/>
+  <!-- Curled tail - thicker and friendlier -->
+  <path d="M155 330 C135 348 122 375 128 398 C134 420 155 428 170 422 C185 416 188 396 180 380 C172 365 158 358 153 350" stroke="#99F0D6" stroke-width="20" stroke-linecap="round" fill="none" opacity="0.9"/>
   <!-- Front leg -->
-  <path d="M280 340 L275 385 C273 395 265 400 258 395 L250 385" stroke="#a5b4fc" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M278 338 L274 380 C272 390 264 394 258 389 L252 380" stroke="#66E6C2" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.9"/>
   <!-- Back leg -->
-  <path d="M220 345 L215 388 C213 398 205 402 198 397 L190 387" stroke="#a5b4fc" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.9"/>
-  <!-- Body stripe details -->
-  <path d="M200 200 C230 195 270 200 300 220" stroke="#818cf8" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.4"/>
-  <path d="M190 230 C220 225 265 228 305 250" stroke="#818cf8" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.35"/>
-  <path d="M185 260 C215 255 260 258 300 275" stroke="#818cf8" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M218 342 L214 382 C212 392 204 396 198 391 L192 382" stroke="#66E6C2" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <!-- Single body stripe - simpler -->
+  <path d="M200 220 C235 215 275 220 310 245" stroke="#33D4A8" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.35"/>
 </svg>

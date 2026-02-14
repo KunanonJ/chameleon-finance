@@ -5,8 +5,10 @@ import { formatCurrency } from '@shared/lib/currencies';
 import { computeBreakdownByType, computeMonthlyTrend } from '@shared/lib/financeUtils';
 import { getTypeColor, getTypeLabel } from '@shared/lib/financeConstants';
 import FinanceTreemapView from '@features/finance/FinanceTreemapView';
-import FinanceBeeswarmView from '@features/finance/FinanceBeeswarmView';
-import FinanceCirclePackView from '@features/finance/FinanceCirclePackView';
+import FinanceBarView from '@features/finance/FinanceBarView';
+import FinanceLineView from '@features/finance/FinanceLineView';
+import FinancePieView from '@features/finance/FinancePieView';
+import FinanceAreaView from '@features/finance/FinanceAreaView';
 import FinanceSankeyView from '@features/finance/FinanceSankeyView';
 
 export default function FinanceDashboard({ currentView }) {
@@ -44,9 +46,11 @@ export default function FinanceDashboard({ currentView }) {
   return (
     <div className="space-y-6">
       {/* Visualization */}
+      {currentView === 'bar' && <FinanceBarView />}
+      {currentView === 'line' && <FinanceLineView />}
+      {currentView === 'pie' && <FinancePieView />}
+      {currentView === 'area' && <FinanceAreaView />}
       {currentView === 'treemap' && <FinanceTreemapView />}
-      {currentView === 'beeswarm' && <FinanceBeeswarmView />}
-      {currentView === 'circlepack' && <FinanceCirclePackView />}
       {currentView === 'sankey' && <FinanceSankeyView />}
 
       {/* Breakdown by Type */}

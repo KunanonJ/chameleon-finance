@@ -1,6 +1,6 @@
 # Chameleon
 
-A personal finance tracker built with React. Track subscriptions and financial records, visualize spending through interactive treemaps, beeswarm charts, circle packs, and Sankey diagrams -- with optional Google Sheets sync and mobile support via Capacitor.
+A personal finance tracker built with React. Track subscriptions and financial records, visualize spending through interactive bar charts, line charts, pie/donut charts, area charts, treemaps, and Sankey diagrams -- with optional Google Sheets sync and mobile support via Capacitor.
 
 ## Features
 
@@ -11,14 +11,14 @@ A personal finance tracker built with React. Track subscriptions and financial r
 - **Custom Icons** -- Upload brand icons for records (auto-resized to 100px, stored as base64) with auto-detection from description via logo.dev
 - **Color-Coded Records** -- 12-color picker per record, displayed as a gradient color bar on cards
 - **Clickable Cards** -- Click any finance record card to open the edit modal directly
-- **Finance Dashboard** -- Treemap, beeswarm, circle pack, and Sankey diagram views of your financial data
+- **Finance Dashboard** -- Bar, line, pie/donut, area, treemap, and Sankey diagram views of your financial data (powered by Recharts)
 - **Finance Sankey** -- 3-column income flow diagram: Total Income → Total Expenses → Expense breakdown by type + Net Balance
 - **Finance Google Sheets Sync** -- Import financial data from a shared Google Sheets template
 - **Finance Template** -- One-click copy of a pre-built Google Sheets template for quick setup
 
 ### Subscription Tracker
 - **Subscription Tracking** -- Add, edit, and delete subscriptions with price, currency, billing cycle, and category
-- **Subscription Dashboard** -- Treemap, beeswarm, circle pack, and Sankey diagram views of subscription spending
+- **Subscription Dashboard** -- Bar, line, pie/donut, area, treemap, and Sankey diagram views of subscription spending (powered by Recharts)
 - **Sankey Diagram** -- Income flow visualization showing how money flows from income through categories to individual subscriptions
 - **Budget Alerts** -- Set monthly budget limits with threshold warnings (safe / warning / caution / danger)
 - **Categories** -- Auto-categorize subscriptions (entertainment, productivity, health, education, utilities)
@@ -136,8 +136,10 @@ src/
       FinanceRecordCard.jsx         # Clickable record card with color bar + custom icon
       FinanceRecordModal.jsx        # Add/edit form modal (icon upload, color picker)
       FinanceTreemapView.jsx        # Finance treemap visualization
-      FinanceBeeswarmView.jsx       # Finance beeswarm visualization
-      FinanceCirclePackView.jsx     # Finance circle pack visualization
+      FinanceBarView.jsx            # Finance bar chart (Recharts)
+      FinanceLineView.jsx           # Finance line chart (Recharts)
+      FinancePieView.jsx            # Finance pie/donut chart (Recharts)
+      FinanceAreaView.jsx           # Finance area chart (Recharts)
       FinanceSankeyView.jsx         # Finance 3-column Sankey (income → expenses → breakdown)
       useFinanceSheetsSync.js       # Finance Sheets sync hook
     budget/
@@ -152,8 +154,10 @@ src/
       useTrends.js                  # Trend analysis (MoM, YoY, export)
     visualizations/
       TreemapView.jsx               # Subscription treemap chart
-      BeeswarmView.jsx              # Subscription beeswarm chart
-      CirclePackView.jsx            # Subscription circle pack chart
+      BarView.jsx                   # Subscription bar chart (Recharts)
+      LineView.jsx                  # Subscription line chart (Recharts)
+      PieView.jsx                   # Subscription pie/donut chart (Recharts)
+      AreaView.jsx                  # Subscription area chart (Recharts)
       SankeyView.jsx                # Subscription Sankey diagram (income flow)
       ViewToggle.jsx                # Visualization switcher
     settings/
@@ -173,6 +177,7 @@ src/
       Modal.jsx                     # Reusable modal component
       ColorPicker.jsx               # 12-color picker component
       CurrencySelect.jsx            # Currency dropdown component
+      Chart.jsx                     # Recharts wrapper (ChartContainer, ChartTooltipContent, ChartLegendContent)
     hooks/
       useTheme.js                   # Theme application hook
     lib/
@@ -186,8 +191,6 @@ src/
       analytics.js                 # Client analytics
       csvParser.js                 # CSV parsing utilities
       treemapLayout.js             # Treemap layout algorithm
-      beeswarmLayout.js            # Beeswarm layout algorithm
-      circlepackLayout.js          # Circle pack layout algorithm
       sankeyLayout.js              # Sankey diagram layout algorithm
   test/
     setup.js                       # Vitest setup (localStorage mock, etc.)
@@ -296,6 +299,7 @@ Required GitHub secrets (`Settings > Secrets and variables > Actions`):
 
 - **UI**: React 19, Vite 7
 - **Styling**: Tailwind CSS v4 (with `@tailwindcss/vite` plugin)
+- **Charts**: Recharts 2 (bar, line, pie, area) + custom treemap/Sankey
 - **State**: Zustand 5 with persist middleware
 - **Mobile**: Capacitor 8 (iOS + Android)
 - **Unit Testing**: Vitest 4, React Testing Library

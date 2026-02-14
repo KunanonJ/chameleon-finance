@@ -6,7 +6,7 @@ export const useSubscriptionStore = create(
     (set, get) => ({
       subs: [],
       step: 1,
-      currentView: 'treemap',
+      currentView: 'bar',
       income: 0,
 
       addSub: (sub) => set((state) => ({
@@ -48,11 +48,11 @@ export const useSubscriptionStore = create(
             const parsed = JSON.parse(raw);
             // Legacy format: raw array of subs
             if (Array.isArray(parsed)) {
-              return { state: { subs: parsed, step: 1, currentView: 'treemap', income: 0 } };
+              return { state: { subs: parsed, step: 1, currentView: 'bar', income: 0 } };
             }
             // New format: { subs, income }
             if (parsed && Array.isArray(parsed.subs)) {
-              return { state: { subs: parsed.subs, step: 1, currentView: 'treemap', income: parsed.income || 0 } };
+              return { state: { subs: parsed.subs, step: 1, currentView: 'bar', income: parsed.income || 0 } };
             }
             return null;
           } catch {

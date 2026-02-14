@@ -12,7 +12,7 @@ export default function FinanceSection() {
   const [step, setStep] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [currentView, setCurrentView] = useState('treemap');
+  const [currentView, setCurrentView] = useState('bar');
 
   const records = useFinanceStore((s) => s.records);
 
