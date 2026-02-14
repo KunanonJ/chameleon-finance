@@ -15,7 +15,10 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
   const initial = (record.description || '?')[0].toUpperCase();
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+    <div
+      className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
+      onClick={() => onEdit(record.id)}
+    >
       {/* Brand icon or fallback initial */}
       {logoUrl && !iconError ? (
         <img
@@ -84,7 +87,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-1">
         <button
-          onClick={() => onEdit(record.id)}
+          onClick={(e) => { e.stopPropagation(); onEdit(record.id); }}
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-indigo-400"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -92,7 +95,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
           </svg>
         </button>
         <button
-          onClick={() => onRemove(record.id)}
+          onClick={(e) => { e.stopPropagation(); onRemove(record.id); }}
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-red-400"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
