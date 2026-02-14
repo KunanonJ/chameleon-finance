@@ -2,33 +2,44 @@ import { useRef, useState, useEffect, useMemo } from 'react';
 import { useFinanceStore } from '@store/financeStore';
 import { useCurrencyStore } from '@store/currencyStore';
 import { formatCurrency } from '@shared/lib/currencies';
-import { computeBreakdownByType } from '@shared/lib/financeUtils';
 import { getTypeColor, getTypeLabel } from '@shared/lib/financeConstants';
 
 /**
- * Simple 2-column Sankey for finance: Income → Expense Types + Remaining
+ * 3-column Sankey for finance: Income → Expense Types → Individual Records
  */
-function layoutFinanceSankey(width, height, totalIncome, expenseTypes) {
-  if (expenseTypes.length === 0) return { nodes: [], links: [] };
+function layoutFinanceSankey(width, height, totalIncome, expenseRecords) {
+  if (expenseRecords.length === 0) return { nodes: [], links: [] };
 
-  const nodeWidth = width * 0.14;
+  const nodeWidth = width * 0.12;
   const nodePadding = 8;
   const topPadding = 10;
   const availableHeight = height - topPadding * 2;
 
-  const col0X = width * 0.08;
-  const col1X = width * 0.78;
+  const col0X = width * 0.05;
+  const col1X = width * 0.44;
+  const col2X = width * 0.83;
 
+  // Group records by type
+  const typeMap = {};
   let totalExpenses = 0;
-  for (const t of expenseTypes) totalExpenses += t.expenses;
+  for (const r of expenseRecords) {
+    const type = r.type || 'Other';
+    if (!typeMap[type]) {
+      typeMap[type] = { records: [], total: 0 };
+    }
+    typeMap[type].records.push(r);
+    typeMap[type].total += r.expenses || 0;
+    totalExpenses += r.expenses || 0;
+  }
 
   const effectiveIncome = Math.max(totalIncome, totalExpenses) || 1;
   const remaining = Math.max(0, totalIncome - totalExpenses);
+  const types = Object.entries(typeMap).sort((a, b) => b[1].total - a[1].total);
 
   const nodes = [];
   const links = [];
 
-  // Income node (left)
+  // --- LEFT COLUMN: Income node ---
   nodes.push({
     id: '_income',
     label: 'Income',
@@ -41,63 +52,98 @@ function layoutFinanceSankey(width, height, totalIncome, expenseTypes) {
     column: 0,
   });
 
-  // Expense type nodes (right)
-  const typeCount = expenseTypes.length + (remaining > 0 ? 1 : 0);
-  const paddingTotal = Math.max(0, typeCount - 1) * nodePadding;
-  const typeAvailableHeight = availableHeight - paddingTotal;
+  // --- MIDDLE COLUMN: Expense type nodes ---
+  const midCount = types.length + (remaining > 0 ? 1 : 0);
+  const midPaddingTotal = Math.max(0, midCount - 1) * nodePadding;
+  const midAvailableHeight = availableHeight - midPaddingTotal;
 
-  let typeY = topPadding;
-  let incomeYOffset = topPadding;
+  let midY = topPadding;
+  const typeNodes = [];
 
-  for (const t of expenseTypes) {
-    const h = Math.max(20, (t.expenses / effectiveIncome) * typeAvailableHeight);
+  for (const [typeId, typeData] of types) {
+    const h = Math.max(16, (typeData.total / effectiveIncome) * midAvailableHeight);
     const node = {
-      id: `_type_${t.type}`,
-      label: getTypeLabel(t.type),
-      value: t.expenses,
+      id: `_type_${typeId}`,
+      label: getTypeLabel(typeId),
+      value: typeData.total,
       x: col1X,
-      y: typeY,
+      y: midY,
       width: nodeWidth,
       height: h,
-      color: getTypeColor(t.type),
+      color: getTypeColor(typeId),
       column: 1,
     };
     nodes.push(node);
-
-    const linkHeight = (t.expenses / effectiveIncome) * availableHeight;
-    links.push({
-      source: '_income',
-      target: node.id,
-      value: t.expenses,
-      sourceX: col0X + nodeWidth,
-      sourceY: incomeYOffset,
-      sourceHeight: linkHeight,
-      targetX: col1X,
-      targetY: typeY,
-      targetHeight: h,
-      color: getTypeColor(t.type),
-    });
-
-    typeY += h + nodePadding;
-    incomeYOffset += linkHeight;
+    typeNodes.push({ node, typeId, typeData });
+    midY += h + nodePadding;
   }
 
-  // Remaining/Savings node
+  // Remaining/Savings node in middle column
+  let remainingNode = null;
   if (remaining > 0) {
-    const h = Math.max(20, (remaining / effectiveIncome) * typeAvailableHeight);
-    const node = {
+    const h = Math.max(16, (remaining / effectiveIncome) * midAvailableHeight);
+    remainingNode = {
       id: '_remaining',
       label: 'Savings',
       value: remaining,
       x: col1X,
-      y: typeY,
+      y: midY,
       width: nodeWidth,
       height: h,
       color: '#86efac',
       column: 1,
     };
-    nodes.push(node);
+    nodes.push(remainingNode);
+  }
 
+  // --- RIGHT COLUMN: Individual record nodes ---
+  for (const { node: typeNode, typeData } of typeNodes) {
+    const recs = typeData.records.sort((a, b) => (b.expenses || 0) - (a.expenses || 0));
+    const recPaddingTotal = Math.max(0, recs.length - 1) * (nodePadding / 2);
+    const recAvailableHeight = typeNode.height - recPaddingTotal;
+
+    let recY = typeNode.y;
+
+    for (const rec of recs) {
+      const expense = rec.expenses || 0;
+      const h = Math.max(12, (expense / typeData.total) * recAvailableHeight);
+      const recNode = {
+        id: rec.id,
+        label: rec.description,
+        value: expense,
+        x: col2X,
+        y: recY,
+        width: nodeWidth,
+        height: h,
+        color: getTypeColor(rec.type),
+        column: 2,
+      };
+      nodes.push(recNode);
+      recY += h + nodePadding / 2;
+    }
+  }
+
+  // --- LINKS: Income → Types ---
+  let incomeYOffset = topPadding;
+  for (const { node: typeNode } of typeNodes) {
+    const linkHeight = (typeNode.value / effectiveIncome) * availableHeight;
+    links.push({
+      source: '_income',
+      target: typeNode.id,
+      value: typeNode.value,
+      sourceX: col0X + nodeWidth,
+      sourceY: incomeYOffset,
+      sourceHeight: linkHeight,
+      targetX: col1X,
+      targetY: typeNode.y,
+      targetHeight: typeNode.height,
+      color: typeNode.color,
+    });
+    incomeYOffset += linkHeight;
+  }
+
+  // Income → Remaining link
+  if (remainingNode && remaining > 0) {
     const linkHeight = (remaining / effectiveIncome) * availableHeight;
     links.push({
       source: '_income',
@@ -107,10 +153,37 @@ function layoutFinanceSankey(width, height, totalIncome, expenseTypes) {
       sourceY: incomeYOffset,
       sourceHeight: linkHeight,
       targetX: col1X,
-      targetY: typeY,
-      targetHeight: h,
-      color: '#86efac',
+      targetY: remainingNode.y,
+      targetHeight: remainingNode.height,
+      color: remainingNode.color,
     });
+  }
+
+  // --- LINKS: Types → Individual Records ---
+  for (const { node: typeNode, typeData } of typeNodes) {
+    const recs = typeData.records.sort((a, b) => (b.expenses || 0) - (a.expenses || 0));
+    let typeYOffset = typeNode.y;
+
+    for (const rec of recs) {
+      const recNode = nodes.find((n) => n.id === rec.id);
+      if (!recNode) continue;
+
+      const expense = rec.expenses || 0;
+      const linkHeight = (expense / typeData.total) * typeNode.height;
+      links.push({
+        source: typeNode.id,
+        target: rec.id,
+        value: expense,
+        sourceX: col1X + nodeWidth,
+        sourceY: typeYOffset,
+        sourceHeight: linkHeight,
+        targetX: col2X,
+        targetY: recNode.y,
+        targetHeight: recNode.height,
+        color: typeNode.color,
+      });
+      typeYOffset += linkHeight;
+    }
   }
 
   return { nodes, links };
@@ -154,14 +227,13 @@ export default function FinanceSankeyView() {
   const { nodes, links } = useMemo(() => {
     if (dimensions.width === 0 || records.length === 0) return { nodes: [], links: [] };
 
-    const breakdown = computeBreakdownByType(records);
     let totalIncome = 0;
     for (const r of records) totalIncome += r.income || 0;
 
-    // Only show expense types in the right column (exclude Income type)
-    const expenseTypes = breakdown.filter((b) => b.expenses > 0);
+    // Only include records that have expenses
+    const expenseRecords = records.filter((r) => (r.expenses || 0) > 0);
 
-    return layoutFinanceSankey(dimensions.width, dimensions.height, totalIncome, expenseTypes);
+    return layoutFinanceSankey(dimensions.width, dimensions.height, totalIncome, expenseRecords);
   }, [records, dimensions]);
 
   if (records.length === 0) {
@@ -171,6 +243,18 @@ export default function FinanceSankeyView() {
       </div>
     );
   }
+
+  // Collect linked node IDs for hover highlighting
+  const getLinkedIds = (id) => {
+    const linked = new Set([id]);
+    for (const link of links) {
+      if (link.source === id) linked.add(link.target);
+      if (link.target === id) linked.add(link.source);
+    }
+    return linked;
+  };
+
+  const highlightedIds = hoveredId ? getLinkedIds(hoveredId) : null;
 
   return (
     <div ref={containerRef} className="w-full">
@@ -186,13 +270,15 @@ export default function FinanceSankeyView() {
           style={{ pointerEvents: 'none' }}
         >
           {links.map((link, i) => {
-            const isHighlighted = hoveredId === link.source || hoveredId === link.target;
+            const isHighlighted = highlightedIds
+              ? highlightedIds.has(link.source) || highlightedIds.has(link.target)
+              : false;
             return (
               <path
                 key={`${link.source}-${link.target}-${i}`}
                 d={sankeyLinkPath(link)}
                 fill={link.color}
-                opacity={hoveredId ? (isHighlighted ? 0.5 : 0.1) : 0.3}
+                opacity={hoveredId ? (isHighlighted ? 0.5 : 0.08) : 0.3}
                 className="transition-opacity duration-200"
               />
             );
