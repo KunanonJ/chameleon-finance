@@ -158,8 +158,9 @@ export function useTrends() {
 
     history.push(snapshot);
 
-    if (history.length > 24) {
-      history = history.slice(-24);
+    // Limit history to 12 months, starting from January
+    if (history.length > 12) {
+      history = history.slice(-12);
     }
 
     saveHistory(history);

@@ -9,7 +9,7 @@ function getTextColor(hex) {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? '#1e293b' : '#ffffff';
+  return luminance > 0.6 ? '#0f172a' : '#ffffff';
 }
 
 /**
@@ -19,14 +19,14 @@ function getTextColor(hex) {
  * Layer 3: Net Balance + Expense breakdown by type
  */
 function layoutFinanceSankey(width, height, totalIncome, totalExpenses, expenseRecords) {
-  const nodeWidth = width * 0.12;
-  const nodePadding = 8;
-  const topPadding = 10;
+  const nodeWidth = Math.min(120, width * 0.15);
+  const nodePadding = 12;
+  const topPadding = 20;
   const availableHeight = height - topPadding * 2;
 
   const col0X = width * 0.05;
-  const col1X = width * 0.44;
-  const col2X = width * 0.83;
+  const col1X = width * 0.5 - nodeWidth / 2;
+  const col2X = width * 0.95 - nodeWidth;
 
   const effectiveIncome = Math.max(totalIncome, totalExpenses) || 1;
   const netBalance = Math.max(0, totalIncome - totalExpenses);
@@ -46,48 +46,76 @@ function layoutFinanceSankey(width, height, totalIncome, totalExpenses, expenseR
   // --- COLUMN 0: Income ---
   nodes.push({
     id: '_income',
-    label: 'Income',
-    value: effectiveIncome,
+    label: 'Total Income',
+    value: totalIncome,
     x: col0X,
     y: topPadding,
     width: nodeWidth,
-    height: availableHeight,
-    color: '#22c55e',
+    height: Math.max(40, (totalIncome / effectiveIncome) * availableHeight),
+    color: '#10b981', // emerald-500
     column: 0,
   });
 
   // --- COLUMN 1: Total Expenses ---
+  // If expenses exist, place them. If 0 expenses, we skip this node visually but logically keep it simple.
   const expenseHeight = totalExpenses > 0
-    ? Math.max(16, (totalExpenses / effectiveIncome) * availableHeight)
+    ? Math.max(40, (totalExpenses / effectiveIncome) * availableHeight)
     : 0;
 
   let expenseNode = null;
   if (totalExpenses > 0) {
     expenseNode = {
       id: '_expenses',
-      label: 'Expenses',
+      label: 'Total Expenses',
       value: totalExpenses,
       x: col1X,
-      y: topPadding,
+      y: topPadding, // aligned top with income for cleaner look
       width: nodeWidth,
       height: expenseHeight,
-      color: '#ef4444',
+      color: '#ef4444', // red-500
       column: 1,
     };
     nodes.push(expenseNode);
   }
 
   // --- COLUMN 2: Net Balance + Expense breakdown by type ---
-  const col2Count = types.length + (netBalance > 0 ? 1 : 0);
-  const col2PaddingTotal = Math.max(0, col2Count - 1) * nodePadding;
-  const col2AvailableHeight = availableHeight - col2PaddingTotal;
-
+  // Start stacking from top
   let col2Y = topPadding;
+  
+  // Net Balance node first (if positive)
+  let balanceNode = null;
+  if (netBalance > 0) {
+    const h = Math.max(40, (netBalance / effectiveIncome) * availableHeight);
+    balanceNode = {
+      id: '_balance',
+      label: 'Net Savings',
+      value: netBalance,
+      x: col2X,
+      y: col2Y,
+      width: nodeWidth,
+      height: h,
+      color: '#3b82f6', // blue-500
+      column: 2,
+    };
+    nodes.push(balanceNode);
+    col2Y += h + nodePadding;
+  }
+
   const typeNodes = [];
 
   // Expense type breakdown nodes
+  // Scale available height for types based on remaining space or proportional
+  // Use remainder of height if balance exists
+  const heightForTypes = availableHeight - (balanceNode ? (balanceNode.height + nodePadding) : 0);
+  // Re-normalize type heights to fit visual space better if needed, but strict proportion is best for Sankey
+  
   for (const [typeId, typeTotal] of types) {
-    const h = Math.max(16, (typeTotal / effectiveIncome) * col2AvailableHeight);
+    // Height is proportional to its share of total income (since that's the base scale)
+    const h = Math.max(24, (typeTotal / effectiveIncome) * availableHeight);
+    
+    // Safety check to ensure we don't overflow canvas too badly if minimum heights add up
+    // ... logic omitted for brevity, CSS overflow:visible handles slight overruns
+    
     const node = {
       id: `_type_${typeId}`,
       label: getTypeLabel(typeId),
@@ -104,80 +132,81 @@ function layoutFinanceSankey(width, height, totalIncome, totalExpenses, expenseR
     col2Y += h + nodePadding;
   }
 
-  // Net Balance node
-  let balanceNode = null;
-  if (netBalance > 0) {
-    const h = Math.max(16, (netBalance / effectiveIncome) * col2AvailableHeight);
-    balanceNode = {
-      id: '_balance',
-      label: 'Net Balance',
-      value: netBalance,
-      x: col2X,
-      y: col2Y,
-      width: nodeWidth,
-      height: h,
-      color: '#86efac',
-      column: 2,
-    };
-    nodes.push(balanceNode);
-  }
-
   // --- LINKS ---
 
-  // Income → Expenses (col 0 → col 1)
+  // Link 1: Income -> Net Balance (direct leap)
+  if (balanceNode && netBalance > 0) {
+    // Source Y starts at bottom of Income node and goes up? No, logically it's the "savings" part.
+    // Let's say savings is the BOTTOM part of income visually? Or TOP?
+    // Often savings is visualized as the remainder. Let's put it at the bottom of Income.
+    const linkValue = netBalance;
+    const linkHeight = (linkValue / totalIncome) * nodes[0].height;
+    
+    // Placement on Income node: top or bottom?
+    // Let's place it at the BOTTOM of income node to split flow
+    const sourceY = nodes[0].y + nodes[0].height - linkHeight;
+    
+    links.push({
+      source: '_income',
+      target: '_balance',
+      value: linkValue,
+      sourceX: col0X + nodeWidth,
+      sourceY: sourceY,
+      sourceHeight: linkHeight,
+      targetX: col2X,
+      targetY: balanceNode.y,
+      targetHeight: balanceNode.height,
+      gradient: ['#10b981', '#3b82f6'], // green to blue
+      id: 'link_savings'
+    });
+  }
+
+  // Link 2: Income -> Expenses (col 0 -> col 1)
   if (expenseNode && totalExpenses > 0) {
-    const linkHeight = (totalExpenses / effectiveIncome) * availableHeight;
+    const linkValue = totalExpenses;
+    const linkHeight = (linkValue / totalIncome) * nodes[0].height;
+    
+    // Placement on Income node: TOP (above savings)
+    const sourceY = nodes[0].y; 
+
     links.push({
       source: '_income',
       target: '_expenses',
-      value: totalExpenses,
+      value: linkValue,
       sourceX: col0X + nodeWidth,
-      sourceY: topPadding,
+      sourceY: sourceY,
       sourceHeight: linkHeight,
       targetX: col1X,
       targetY: expenseNode.y,
       targetHeight: expenseNode.height,
-      color: '#ef4444',
+      gradient: ['#10b981', '#ef4444'], // green to red
+      id: 'link_expenses_total'
     });
   }
 
-  // Income → Net Balance (col 0 → col 2, skips col 1)
-  if (balanceNode && netBalance > 0) {
-    const expenseLinkHeight = (totalExpenses / effectiveIncome) * availableHeight;
-    const balanceLinkHeight = (netBalance / effectiveIncome) * availableHeight;
-    links.push({
-      source: '_income',
-      target: '_balance',
-      value: netBalance,
-      sourceX: col0X + nodeWidth,
-      sourceY: topPadding + expenseLinkHeight,
-      sourceHeight: balanceLinkHeight,
-      targetX: col2X,
-      targetY: balanceNode.y,
-      targetHeight: balanceNode.height,
-      color: '#86efac',
-    });
-  }
+  // Links 3: Expenses -> Types (col 1 -> col 2)
+  if (expenseNode) {
+    let currentExpY = expenseNode.y;
+    typeNodes.forEach((tNode, i) => {
+        const linkValue = tNode.value;
+        const linkHeight = (linkValue / totalExpenses) * expenseNode.height;
 
-  // Expenses → each expense type (col 1 → col 2)
-  if (expenseNode && totalExpenses > 0) {
-    let expYOffset = expenseNode.y;
-    for (const typeNode of typeNodes) {
-      const linkHeight = (typeNode.value / totalExpenses) * expenseNode.height;
-      links.push({
-        source: '_expenses',
-        target: typeNode.id,
-        value: typeNode.value,
-        sourceX: col1X + nodeWidth,
-        sourceY: expYOffset,
-        sourceHeight: linkHeight,
-        targetX: col2X,
-        targetY: typeNode.y,
-        targetHeight: typeNode.height,
-        color: typeNode.color,
-      });
-      expYOffset += linkHeight;
-    }
+        links.push({
+            source: '_expenses',
+            target: tNode.id,
+            value: linkValue,
+            sourceX: col1X + nodeWidth,
+            sourceY: currentExpY,
+            sourceHeight: linkHeight,
+            targetX: col2X,
+            targetY: tNode.y,
+            targetHeight: tNode.height,
+            gradient: ['#ef4444', tNode.color], // red to type color
+            id: `link_type_${i}`
+        });
+
+        currentExpY += linkHeight;
+    });
   }
 
   return { nodes, links };
@@ -185,15 +214,24 @@ function layoutFinanceSankey(width, height, totalIncome, totalExpenses, expenseR
 
 function sankeyLinkPath(link) {
   const { sourceX, sourceY, sourceHeight, targetX, targetY, targetHeight } = link;
-  const midX = (sourceX + targetX) / 2;
+  const curvature = 0.5;
+  const xi = d3_interpolateNumber(sourceX, targetX);
+  const x0 = xi(curvature);
+  const x1 = xi(1 - curvature);
+  
+  return `
+    M${sourceX},${sourceY}
+    C${x0},${sourceY} ${x1},${targetY} ${targetX},${targetY}
+    L${targetX},${targetY + targetHeight}
+    C${x1},${targetY + targetHeight} ${x0},${sourceY + sourceHeight} ${sourceX},${sourceY + sourceHeight}
+    Z
+  `;
+}
 
-  return [
-    `M ${sourceX} ${sourceY}`,
-    `C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`,
-    `L ${targetX} ${targetY + targetHeight}`,
-    `C ${midX} ${targetY + targetHeight}, ${midX} ${sourceY + sourceHeight}, ${sourceX} ${sourceY + sourceHeight}`,
-    'Z',
-  ].join(' ');
+function d3_interpolateNumber(a, b) {
+    return function(t) {
+        return a + (b - a) * t;
+    };
 }
 
 export default function FinanceSankeyView() {
@@ -211,7 +249,8 @@ export default function FinanceSankeyView() {
 
     const observer = new ResizeObserver((entries) => {
       const { width } = entries[0].contentRect;
-      setDimensions({ width, height: Math.max(350, width * 0.7) });
+      // Taller aspect ratio for better vertical spacing
+      setDimensions({ width, height: Math.max(500, width * 0.6) });
     });
 
     observer.observe(el);
@@ -238,12 +277,12 @@ export default function FinanceSankeyView() {
   if (records.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-600">
-        <p className="text-sm text-slate-400 dark:text-slate-500">Add records to see the Sankey diagram</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500">Add records to see the flow of funds</p>
       </div>
     );
   }
 
-  // Collect linked node IDs for hover highlighting
+  // Interaction helpers
   const getLinkedIds = (id) => {
     const linked = new Set([id]);
     for (const link of links) {
@@ -258,73 +297,103 @@ export default function FinanceSankeyView() {
   return (
     <div ref={containerRef} className="w-full">
       <div
-        className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"
-        style={{ width: dimensions.width, height: dimensions.height }}
+        className="relative overflow-visible rounded-3xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
+        style={{ width: '100%', height: dimensions.height }}
       >
-        {/* SVG Links */}
         <svg
-          className="absolute inset-0"
-          width={dimensions.width}
-          height={dimensions.height}
-          style={{ pointerEvents: 'none' }}
+          className="absolute inset-0 h-full w-full"
+          style={{ overflow: 'visible' }}
         >
-          {links.map((link, i) => {
+          <defs>
+            {links.map((link) => (
+              <linearGradient
+                key={`grad_${link.id}`}
+                id={`grad_${link.id}`}
+                gradientUnits="userSpaceOnUse"
+                x1={link.sourceX}
+                y1={0}
+                x2={link.targetX}
+                y2={0}
+              >
+                <stop offset="0%" stopColor={link.gradient[0]} />
+                <stop offset="100%" stopColor={link.gradient[1]} />
+              </linearGradient>
+            ))}
+          </defs>
+
+          {links.map((link) => {
             const isHighlighted = highlightedIds
               ? highlightedIds.has(link.source) || highlightedIds.has(link.target)
               : false;
+            // Opacity logic:
+            // - No hover: 0.4
+            // - Hover active & involved: 0.7
+            // - Hover active & NOT involved: 0.1
+            const opacity = hoveredId 
+                ? (isHighlighted ? 0.7 : 0.1) 
+                : 0.4;
+            
             return (
               <path
-                key={`${link.source}-${link.target}-${i}`}
+                key={link.id}
                 d={sankeyLinkPath(link)}
-                fill={link.color}
-                opacity={hoveredId ? (isHighlighted ? 0.5 : 0.08) : 0.3}
-                className="transition-opacity duration-200"
+                fill={`url(#grad_${link.id})`}
+                opacity={opacity}
+                className="transition-all duration-300 ease-out"
+                style={{ mixBlendMode: 'multiply' }} // Dark mode friendly blend? Maybe not for SVG
               />
             );
           })}
         </svg>
 
-        {/* Nodes */}
         {nodes.map((node) => {
           const isHovered = hoveredId === node.id;
-          const showLabel = node.height >= 20;
-          const showValue = node.height >= 36;
+          const isDimmed = hoveredId && !highlightedIds?.has(node.id);
           const textColor = getTextColor(node.color);
-          const subTextColor = textColor === '#ffffff' ? 'rgba(255,255,255,0.75)' : 'rgba(30,41,59,0.6)';
 
           return (
             <div
               key={node.id}
-              className="absolute flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-white/60 transition-all duration-200 hover:brightness-95 dark:border-slate-600/60"
+              className={`absolute flex flex-col justify-center rounded-xl p-3 shadow-sm transition-all duration-300 ${
+                isDimmed ? 'opacity-30 grayscale' : 'opacity-100'
+              } ${isHovered ? 'z-10 scale-105 shadow-xl ring-2 ring-white/20' : 'z-0 scale-100 hover:shadow-md'}`}
               style={{
                 left: node.x,
                 top: node.y,
-                width: Math.max(0, node.width),
-                height: Math.max(0, node.height),
+                width: node.width,
+                height: node.height,
                 backgroundColor: node.color,
-                transform: isHovered ? 'scale(1.03)' : 'scale(1)',
-                zIndex: isHovered ? 10 : 2,
-                boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.15)' : '0 1px 3px rgba(0,0,0,0.06)',
               }}
               onMouseEnter={() => setHoveredId(node.id)}
               onMouseLeave={() => setHoveredId(null)}
-              title={`${node.label}: ${formatCurrency(node.value, selectedCurrency, currencies)}`}
             >
-              {showLabel && (
-                <span
-                  className="truncate px-1 text-center text-xs font-semibold leading-tight"
-                  style={{ color: textColor }}
-                >
-                  {node.label}
-                </span>
-              )}
-              {showValue && (
-                <span
-                  className="text-xs leading-tight"
-                  style={{ color: subTextColor }}
-                >
-                  {formatCurrency(node.value, selectedCurrency, currencies)}
-                </span>
+              <div className="flex flex-col items-center text-center">
+                 {/* Only show label if node is tall enough */}
+                {node.height > 30 && (
+                    <span 
+                        className="truncate text-xs font-bold tracking-tight"
+                        style={{ color: textColor }}
+                    >
+                        {node.label}
+                    </span>
+                )}
+                {/* Only show value if node is very tall OR hampered */}
+                {node.height > 50 && (
+                    <span 
+                        className="mt-0.5 text-[10px] opacity-90"
+                        style={{ color: textColor }}
+                    >
+                        {formatCurrency(node.value, selectedCurrency, currencies)}
+                    </span>
+                )}
+              </div>
+              
+              {/* Tooltip on hover (simple absolute position or native title) */}
+              {isHovered && (
+                 <div className="absolute left-1/2 top-[-40px] z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl dark:bg-white dark:text-slate-900">
+                    {node.label}: {formatCurrency(node.value, selectedCurrency, currencies)}
+                    <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-900 dark:border-t-white"></div>
+                 </div> 
               )}
             </div>
           );

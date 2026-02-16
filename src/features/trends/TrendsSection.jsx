@@ -51,7 +51,7 @@ export default function TrendsSection() {
       <div className="rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
         <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">Spending Trends</h3>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          Not enough data yet. Trends will appear after at least 2 months of tracked data.
+          Not enough data yet. Trends will appear after at least 12 months of tracked data starting from January.
         </p>
         <button
           onClick={recordSnapshot}

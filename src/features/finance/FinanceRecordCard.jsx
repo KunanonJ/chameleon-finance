@@ -32,20 +32,20 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
       {record.customIcon ? (
         <img
           src={record.customIcon}
-          className="h-10 w-10 shrink-0 rounded-xl object-cover"
+          className="h-10 w-10 shrink-0 rounded-lg object-cover"
           alt={record.description}
         />
       ) : logoUrl && !iconError ? (
         <img
           src={logoUrl}
-          className="h-10 w-10 shrink-0 rounded-xl object-contain"
+          className="h-10 w-10 shrink-0 rounded-lg object-contain"
           crossOrigin="anonymous"
           alt={record.description}
           onError={() => setIconError(true)}
         />
       ) : (
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
           style={{ backgroundColor: typeColor }}
         >
           {initial}
@@ -55,7 +55,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
       {/* Main content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">
+          <span className="truncate font-bold text-slate-900 dark:text-slate-100">
             {record.description}
           </span>
           <span
@@ -70,7 +70,7 @@ export default function FinanceRecordCard({ record, onEdit, onRemove }) {
             </svg>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
+        <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>{record.date}</span>
           {record.dueDate && <span>Due: {record.dueDate}</span>}
           {record.paymentMethod && <span>{record.paymentMethod}</span>}

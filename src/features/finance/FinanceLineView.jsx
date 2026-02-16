@@ -18,11 +18,37 @@ export default function FinanceLineView() {
     const trendMap = new Map(trend.map((entry) => [entry.month, entry]));
     const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' });
 
-    const now = new Date();
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - (MONTHS_TO_SHOW - 1), 1);
+    if (records.length === 0) return [];
 
-    return Array.from({ length: MONTHS_TO_SHOW }, (_, i) => {
+    // Find the earliest date across all valid records
+    const dates = records
+        .map((r) => (r.date ? new Date(r.date) : null))
+        .filter((d) => d && !isNaN(d.getTime()))
+        .sort((a, b) => a - b);
+
+    const now = new Date();
+    // Default to 12 months ago if no valid dates found (fallback)
+    let startMonth = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+    if (dates.length > 0) {
+        // Start from the month of the earliest record
+        startMonth = new Date(dates[0].getFullYear(), dates[0].getMonth(), 1);
+    }
+
+    // End at the current month
+    const endMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // Calculate number of months to show
+    const monthsToShow = (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + (endMonth.getMonth() - startMonth.getMonth()) + 1;
+    // Cap minimum at 6 months for better visual if very few records
+    const finalMonthsToShow = Math.max(monthsToShow, 6);
+    
+    // Adjust startMonth if we forced minimum 6 months and real history is shorter
+    if (finalMonthsToShow > monthsToShow) {
+        startMonth = new Date(endMonth.getFullYear(), endMonth.getMonth() - (finalMonthsToShow - 1), 1);
+    }
+
+    return Array.from({ length: finalMonthsToShow }, (_, i) => {
       const monthDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
       const key = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
       const bucket = trendMap.get(key);

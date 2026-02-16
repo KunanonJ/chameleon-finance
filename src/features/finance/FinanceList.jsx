@@ -11,10 +11,26 @@ export default function FinanceList({ onEdit, onOpenModal }) {
 
   const filtered = filterRecords(records, filters);
 
-  // Sort by date descending
+  // Sort by Date (Desc) -> Amount (Desc) -> Description (Asc)
   const sorted = [...filtered].sort((a, b) => {
-    if (!a.date || !b.date) return 0;
-    return b.date.localeCompare(a.date);
+    // 1. Date Ascending (Oldest to Newest)
+    if (a.date !== b.date) {
+      if (!a.date) return -1; // No date comes first? Or last? Usually last.
+      if (!b.date) return 1;
+      return a.date.localeCompare(b.date); // Ascending
+    }
+
+    // 2. Amount Descending (Income + Expenses magnitude)
+    const amountA = (parseFloat(a.income) || 0) + (parseFloat(a.expenses) || 0);
+    const amountB = (parseFloat(b.income) || 0) + (parseFloat(b.expenses) || 0);
+    if (amountA !== amountB) {
+      return amountB - amountA; // Descending
+    }
+
+    // 3. Description Ascending
+    const descA = a.description || '';
+    const descB = b.description || '';
+    return descA.localeCompare(descB);
   });
 
   const typeFilters = [{ id: 'all', label: 'All' }, ...FINANCE_TYPES];
