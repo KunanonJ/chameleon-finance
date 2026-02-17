@@ -106,6 +106,7 @@ test.describe('Finance Section - Empty State', () => {
   test('shows toolbar buttons', async ({ page }) => {
     await expect(page.locator('button:has-text("Export")')).toBeVisible();
     await expect(page.locator('button:has-text("Template")')).toBeVisible();
+    await expect(page.locator('button:has-text("Upload Statements")')).toBeVisible();
   });
 
   test('shows Add Record button', async ({ page }) => {
@@ -167,6 +168,27 @@ test.describe('Finance - Add Record', () => {
     // Modal should be closed
     await expect(page.getByRole('heading', { name: 'Add Record' })).not.toBeVisible();
   });
+
+  test('imports multiple bank statement files', async ({ page }) => {
+    const input = page.locator('[data-testid="statement-upload-input"]');
+    await input.setInputFiles([
+      {
+        name: 'bank-a.csv',
+        mimeType: 'text/csv',
+        buffer: Buffer.from('Date,Description,Amount\n2026-02-01,Salary,5000\n2026-02-02,Coffee,-120'),
+      },
+      {
+        name: 'bank-b.csv',
+        mimeType: 'text/csv',
+        buffer: Buffer.from('Date,Description,Amount\n2026-02-03,Rent,-1800'),
+      },
+    ]);
+
+    await expect(page.locator('text=Statements processed')).toBeVisible();
+    await expect(page.locator('text=Salary').first()).toBeVisible();
+    await expect(page.locator('text=Coffee').first()).toBeVisible();
+    await expect(page.locator('text=Rent').first()).toBeVisible();
+  });
 });
 
 test.describe('Finance - Record Management', () => {
@@ -205,12 +227,8 @@ test.describe('Finance - Record Management', () => {
   });
 
   test('can delete a record', async ({ page }) => {
-    // Click delete button (trash icon) on Electric Bill's card
-    // Scope to the record list to avoid matching the Clear All toolbar button
-    const recordList = page.locator('.space-y-2');
-    const trashBtns = recordList.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
-    // Delete the second record (Electric Bill)
-    await trashBtns.nth(1).click();
+    // Click delete button for Electric Bill record
+    await page.getByRole('button', { name: 'Delete Electric Bill' }).click();
 
     await expect(page.locator('text=Electric Bill')).not.toBeVisible();
     await expect(page.locator('text=MonthSalary').first()).toBeVisible();
@@ -348,10 +366,8 @@ test.describe('Finance - Full User Flow', () => {
     await form.evaluate((f) => f.requestSubmit());
     await expect(page.locator('text=FlowSalaryEdited').first()).toBeVisible();
 
-    // 7. Delete expense record (scope to record list to avoid Clear All button)
-    const recordList = page.locator('.space-y-2');
-    const trashBtns = recordList.locator('button').filter({ has: page.locator('path[d*="M19 7l"]') });
-    await trashBtns.nth(1).click();
+    // 7. Delete expense record
+    await page.getByRole('button', { name: 'Delete FlowRent' }).click();
     await expect(page.locator('text=FlowRent')).not.toBeVisible();
 
     // 8. Verify persistence

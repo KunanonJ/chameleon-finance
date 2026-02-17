@@ -1,6 +1,20 @@
 const SERVER_TOKEN_KEY = 'subgrid_server_token';
 const TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 const BACKUP_ENDPOINTS = ['/api/db/backup', '/api/r2/backup'];
+const AUTH_ENDPOINT = '/api/auth/me';
+const AUTH_CACHE_TTL_MS = 60 * 1000;
+
+let cachedCloudAuth = {
+  at: 0,
+  value: {
+    authenticated: false,
+    source: 'cloudflare-access',
+    email: null,
+    userId: null,
+    loginUrl: '/cdn-cgi/access/login',
+    logoutUrl: '/cdn-cgi/access/logout',
+  },
+};
 
 function parseJsonResponse(response) {
   return response
@@ -14,6 +28,44 @@ function canFallbackToNextEndpoint(responseStatus) {
 
 function getStorageType(endpoint) {
   return endpoint.includes('/api/db/') ? 'd1' : 'r2';
+}
+
+function getAuthHeaders(token, includeJsonContentType = false) {
+  const normalizedToken = (token || '').trim();
+  const headers = {};
+  if (includeJsonContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (!normalizedToken) return headers;
+  if (!isValidServerToken(normalizedToken)) {
+    throw new Error('Token must be a 64-character hexadecimal string');
+  }
+
+  headers['X-User-Token'] = normalizedToken;
+  return headers;
+}
+
+function normalizeAuthStatus(raw) {
+  if (!raw || raw.authenticated !== true) {
+    return {
+      authenticated: false,
+      source: 'cloudflare-access',
+      email: null,
+      userId: null,
+      loginUrl: raw?.loginUrl || '/cdn-cgi/access/login',
+      logoutUrl: raw?.logoutUrl || '/cdn-cgi/access/logout',
+    };
+  }
+
+  return {
+    authenticated: true,
+    source: raw.source || 'cloudflare-access',
+    email: raw.email || null,
+    userId: raw.userId || null,
+    loginUrl: raw.loginUrl || '/cdn-cgi/access/login',
+    logoutUrl: raw.logoutUrl || '/cdn-cgi/access/logout',
+  };
 }
 
 function readLocalJson(key, fallback) {
@@ -45,6 +97,30 @@ export function saveServerToken(token) {
   localStorage.setItem(SERVER_TOKEN_KEY, trimmed);
 }
 
+export function canUseCloudBackupAuth(token, cloudAuth) {
+  if (isValidServerToken(token)) return true;
+  return Boolean(cloudAuth?.authenticated);
+}
+
+export async function getCloudAuthStatus({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - cachedCloudAuth.at < AUTH_CACHE_TTL_MS) {
+    return cachedCloudAuth.value;
+  }
+
+  try {
+    const response = await fetch(AUTH_ENDPOINT, { method: 'GET' });
+    const data = await parseJsonResponse(response);
+    const normalized = normalizeAuthStatus(response.ok ? data : null);
+    cachedCloudAuth = { at: now, value: normalized };
+    return normalized;
+  } catch {
+    const fallback = normalizeAuthStatus(null);
+    cachedCloudAuth = { at: now, value: fallback };
+    return fallback;
+  }
+}
+
 export function buildServerPayload({ subscriptions, financeRecords, income }) {
   return {
     version: 3,
@@ -58,21 +134,13 @@ export function buildServerPayload({ subscriptions, financeRecords, income }) {
 }
 
 export async function backupToServer(token, payload) {
-  const normalizedToken = (token || '').trim();
-  if (!isValidServerToken(normalizedToken)) {
-    throw new Error('Token must be a 64-character hexadecimal string');
-  }
-
   const errors = [];
   for (let i = 0; i < BACKUP_ENDPOINTS.length; i++) {
     const endpoint = BACKUP_ENDPOINTS[i];
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Token': normalizedToken,
-        },
+        headers: getAuthHeaders(token, true),
         body: JSON.stringify(payload),
       });
 
@@ -100,20 +168,13 @@ export async function backupToServer(token, payload) {
 }
 
 export async function restoreFromServer(token) {
-  const normalizedToken = (token || '').trim();
-  if (!isValidServerToken(normalizedToken)) {
-    throw new Error('Token must be a 64-character hexadecimal string');
-  }
-
   const errors = [];
   for (let i = 0; i < BACKUP_ENDPOINTS.length; i++) {
     const endpoint = BACKUP_ENDPOINTS[i];
     try {
       const response = await fetch(endpoint, {
         method: 'GET',
-        headers: {
-          'X-User-Token': normalizedToken,
-        },
+        headers: getAuthHeaders(token),
       });
 
       const data = await parseJsonResponse(response);

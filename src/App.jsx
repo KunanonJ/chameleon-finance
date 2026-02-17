@@ -5,7 +5,13 @@ import { useCurrencyStore } from '@store/currencyStore';
 import { useTheme } from '@shared/hooks/useTheme';
 import { formatCurrency } from '@shared/lib/currencies';
 import { toMonthly } from '@shared/lib/currencies';
-import { backupToServer, buildServerPayload, getServerToken, isValidServerToken } from '@shared/lib/serverStorage';
+import {
+  backupToServer,
+  buildServerPayload,
+  getCloudAuthStatus,
+  getServerToken,
+  isValidServerToken,
+} from '@shared/lib/serverStorage';
 
 import SubscriptionList from '@features/subscriptions/SubscriptionList';
 import PresetsGrid from '@features/presets/PresetsGrid';
@@ -125,7 +131,13 @@ export default function App() {
 
   const runAutoCloudBackup = async () => {
     const token = getServerToken();
-    if (!isValidServerToken(token)) return;
+    let requestToken = '';
+    if (isValidServerToken(token)) {
+      requestToken = token;
+    } else {
+      const cloudAuth = await getCloudAuthStatus();
+      if (!cloudAuth.authenticated) return;
+    }
 
     const currentData = autoBackupDataRef.current;
     const payload = buildServerPayload({
@@ -138,7 +150,7 @@ export default function App() {
     if (serializedPayload === lastAutoBackupPayloadRef.current) return;
 
     try {
-      await backupToServer(token, payload);
+      await backupToServer(requestToken, payload);
       lastAutoBackupPayloadRef.current = serializedPayload;
     } catch (err) {
       console.warn('Auto cloud backup failed:', err);

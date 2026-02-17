@@ -8,67 +8,62 @@ Updated: 2026-02-17
 - Branch: `main`
 - Cloudflare Pages project: `chameleon-finance`
 - Production URL: `https://chameleon-finance.pages.dev`
-- Latest deployment URL: `https://06bed3c8.chameleon-finance.pages.dev`
+- Latest deployment URL: `https://69885308.chameleon-finance.pages.dev`
 - Cloudflare account ID used for deploy: `187ab61ed9dbc6e616cb23e6b95aa8f1`
 
 ## What Changed In This Session
 
-### 1. Card UX/UI upgrade (Subscriptions + Finance cards)
-- Improved visual hierarchy, badges, and spacing.
-- Added due-date tone logic on finance cards.
-- Added better accessibility labels and keyboard behavior.
+### 1. Multi-file bank statement upload (Finance Tracker)
+- Added new parser/import pipeline for `.csv/.tsv/.txt` statements.
+- Supports header alias detection (`date`, `description`, `amount`, `debit`, `credit`, `balance`, `type`).
+- Supports amount/date normalization + row-level validation.
+- Deduplicates imported records against existing finance records.
+- Added toolbar upload action and import summary message.
 - Files:
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/subscriptions/SubscriptionCard.jsx`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/FinanceRecordCard.jsx`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/bankStatementImport.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/finance/FinanceToolbar.jsx`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/bankStatementImport.test.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/e2e/finance.spec.js`
 
-### 2. Cloudflare analytics warning fix
-- Removed `%VITE_CLOUDFLARE_ANALYTICS_TOKEN%` placeholder script from `index.html`.
-- Added runtime optional analytics script injection in `main.jsx`.
-- No build warning now if env var is absent.
+### 2. Cloudflare social login for cloud backup/restore
+- Added auth helper to resolve identity from:
+  - legacy `X-User-Token` header, or
+  - Cloudflare Access identity headers.
+- Added `/api/auth/me` endpoint for frontend login state.
+- Updated D1 and R2 backup routes to accept either auth mode.
+- Updated Settings UI with:
+  - social login status
+  - sign in / sign out links via Cloudflare Access
+  - refresh login status action
+- Updated auto-backup flow to run with either:
+  - valid token, or
+  - active Cloudflare Access session.
 - Files:
-  - `/Users/kunanonjarat/Desktop/subgrid/index.html`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/main.jsx`
-
-### 3. E2E stabilization and full test pass
-- Installed Playwright Chromium runtime.
-- Fixed brittle theme/data selectors in E2E tests.
-- File:
-  - `/Users/kunanonjarat/Desktop/subgrid/e2e/app.spec.js`
-
-### 4. Database-backed user data recording
-- Added D1 backup endpoint:
-  - `POST/GET /api/db/backup`
-  - File: `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
-- Updated client backup logic to:
-  - Try DB endpoint first (`/api/db/backup`)
-  - Fallback to R2 endpoint (`/api/r2/backup`)
-  - File: `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
-- Added normalized payload builder including:
-  - `subscriptions`, `financeRecords`, `income`, `budget`, `trends`
-- Added automatic backup triggers in app:
-  - Debounced on data changes
-  - Every 5 minutes
-  - On focus/visibility return
-  - File: `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
-- Added backup trigger events for localStorage changes in:
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/budget/useBudget.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/trends/useTrends.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/features/sync/useSheetsSync.js`
-- Updated settings copy to describe DB-first backup path:
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/_lib/auth.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/auth/me.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/r2/_middleware.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
   - `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`
-- Added tests for storage fallback/payload:
+  - `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
   - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.test.js`
 
-### 5. Docs refresh
-- Rebuilt README to remove merge artifacts and document current architecture + deployment.
-- File:
+### 3. Docs + repo hygiene
+- Updated README with:
+  - latest deployment URL
+  - current test totals
+  - social login + backup notes
+  - bank statement import mention
+- Ignored local npm cache directory in git.
+- Files:
   - `/Users/kunanonjarat/Desktop/subgrid/README.md`
+  - `/Users/kunanonjarat/Desktop/subgrid/.gitignore`
 
 ## Verification Results
 
 - Build: `npm run build` passed
-- Unit tests: `263/263` passed
-- E2E tests: `54/54` passed
+- Unit tests: `271/271` passed
+- E2E tests: `55/55` passed
 
 ## Deploy Runbook
 
@@ -88,9 +83,12 @@ npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=t
 
 ## Notes For Next AI/Dev
 
-- If `X-User-Token` is set (64-char hex), app will auto-backup user data server-side.
-- Backup path is DB-first, R2 fallback.
-- Read these first for data persistence flow:
+- Cloud backup/restore now supports two auth modes:
+  - token mode (`X-User-Token`, 64-hex), and
+  - Cloudflare Access social login mode (header-driven identity).
+- For social login to work in production, configure Cloudflare Zero Trust Access app + IdP policy for the Pages domain.
+- Read these first for auth + backup flow:
   - `/Users/kunanonjarat/Desktop/subgrid/src/shared/lib/serverStorage.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/db/backup.js`
-  - `/Users/kunanonjarat/Desktop/subgrid/src/App.jsx`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/_lib/auth.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/functions/api/auth/me.js`
+  - `/Users/kunanonjarat/Desktop/subgrid/src/features/settings/SettingsModal.jsx`

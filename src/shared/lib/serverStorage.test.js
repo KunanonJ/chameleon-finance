@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   backupToServer,
   buildServerPayload,
+  canUseCloudBackupAuth,
+  getCloudAuthStatus,
   restoreFromServer,
 } from './serverStorage';
 
@@ -75,5 +77,51 @@ describe('serverStorage', () => {
       }),
     }));
     expect(result.subscriptions).toHaveLength(1);
+  });
+
+  it('backupToServer supports Cloudflare Access mode without token header', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, backupDate: '2026-02-17T00:00:00.000Z' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await backupToServer('', { subscriptions: [] });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('/api/db/backup', expect.objectContaining({
+      method: 'POST',
+      headers: expect.not.objectContaining({
+        'X-User-Token': expect.any(String),
+      }),
+    }));
+  });
+
+  it('getCloudAuthStatus returns authenticated user details from API', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        authenticated: true,
+        source: 'cloudflare-access',
+        email: 'user@example.com',
+        userId: 'abc123',
+        loginUrl: '/cdn-cgi/access/login',
+        logoutUrl: '/cdn-cgi/access/logout',
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const status = await getCloudAuthStatus({ force: true });
+    expect(status.authenticated).toBe(true);
+    expect(status.email).toBe('user@example.com');
+    expect(canUseCloudBackupAuth('', status)).toBe(true);
+  });
+
+  it('backupToServer rejects invalid token format when provided', async () => {
+    await expect(backupToServer('invalid-token', { subscriptions: [] }))
+      .rejects
+      .toThrow('Token must be a 64-character hexadecimal string');
   });
 });

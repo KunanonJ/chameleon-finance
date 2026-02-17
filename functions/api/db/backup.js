@@ -1,4 +1,4 @@
-const TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+import { resolveUserToken } from '../_lib/auth.js';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -33,12 +33,6 @@ async function ensureSchema(db) {
   await db.exec(CREATE_TABLE_SQL);
 }
 
-function getUserToken(request) {
-  const token = (request.headers.get('X-User-Token') || '').trim();
-  if (!TOKEN_PATTERN.test(token)) return null;
-  return token.toLowerCase();
-}
-
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS_HEADERS });
 }
@@ -49,9 +43,9 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse({ error: 'D1 database binding not configured' }, 501);
   }
 
-  const token = getUserToken(request);
-  if (!token) {
-    return jsonResponse({ error: 'Missing or invalid token' }, 401);
+  const auth = await resolveUserToken(request);
+  if (!auth) {
+    return jsonResponse({ error: 'Missing auth: provide X-User-Token or sign in via Cloudflare Access' }, 401);
   }
 
   let body;
@@ -79,12 +73,13 @@ export async function onRequestPost({ request, env }) {
     ON CONFLICT(user_token) DO UPDATE SET
       payload_json = excluded.payload_json,
       updated_at = excluded.updated_at
-  `).bind(token, normalizedPayload, now).run();
+  `).bind(auth.token, normalizedPayload, now).run();
 
   return jsonResponse({
     ok: true,
     backupDate: now,
     storage: 'd1',
+    authMode: auth.authMode,
   });
 }
 
@@ -94,9 +89,9 @@ export async function onRequestGet({ request, env }) {
     return jsonResponse({ error: 'D1 database binding not configured' }, 501);
   }
 
-  const token = getUserToken(request);
-  if (!token) {
-    return jsonResponse({ error: 'Missing or invalid token' }, 401);
+  const auth = await resolveUserToken(request);
+  if (!auth) {
+    return jsonResponse({ error: 'Missing auth: provide X-User-Token or sign in via Cloudflare Access' }, 401);
   }
 
   await ensureSchema(db);
@@ -106,7 +101,7 @@ export async function onRequestGet({ request, env }) {
     FROM user_backups
     WHERE user_token = ?1
     LIMIT 1
-  `).bind(token).first();
+  `).bind(auth.token).first();
 
   if (!row?.payload_json) {
     return jsonResponse({ error: 'No backup found' }, 404);

@@ -1,3 +1,5 @@
+import { resolveUserToken } from '../_lib/auth.js';
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -21,12 +23,13 @@ export async function onRequest(context) {
     return jsonResponse({ error: "R2 not configured" }, 501);
   }
 
-  const token = context.request.headers.get("X-User-Token");
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
-    return jsonResponse({ error: "Missing or invalid token" }, 401);
+  const auth = await resolveUserToken(context.request);
+  if (!auth) {
+    return jsonResponse({ error: "Missing auth: provide X-User-Token or sign in via Cloudflare Access" }, 401);
   }
 
-  context.data.userPrefix = `users/${token}`;
+  context.data.userPrefix = `users/${auth.token}`;
+  context.data.authMode = auth.authMode;
   context.data.corsHeaders = corsHeaders;
 
   const response = await context.next();

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Modal from '@shared/ui/Modal';
 import CurrencySelect from '@shared/ui/CurrencySelect';
 import BudgetSettings from '@features/budget/BudgetSettings';
@@ -10,6 +10,8 @@ import { useFinanceStore } from '@store/financeStore';
 import {
   buildServerPayload,
   backupToServer,
+  canUseCloudBackupAuth,
+  getCloudAuthStatus,
   getServerToken,
   isValidServerToken,
   restoreFromServer,
@@ -29,6 +31,18 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [serverToken, setServerToken] = useState(() => getServerToken());
   const [serverBusy, setServerBusy] = useState(false);
   const [serverMessage, setServerMessage] = useState('');
+  const [cloudAuth, setCloudAuth] = useState({
+    loading: true,
+    authenticated: false,
+    email: null,
+    loginUrl: '/cdn-cgi/access/login',
+    logoutUrl: '/cdn-cgi/access/logout',
+  });
+
+  const hasCloudBackupAccess = useMemo(
+    () => canUseCloudBackupAuth(serverToken, cloudAuth),
+    [cloudAuth, serverToken]
+  );
 
   const handleExport = useCallback(() => {
     const data = JSON.stringify(subs, null, 2);
@@ -75,7 +89,23 @@ export default function SettingsModal({ isOpen, onClose }) {
     }
   };
 
+  const refreshCloudAuth = useCallback(async (force = false) => {
+    setCloudAuth((prev) => ({ ...prev, loading: true }));
+    const status = await getCloudAuthStatus({ force });
+    setCloudAuth({ ...status, loading: false });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    refreshCloudAuth(true);
+  }, [isOpen, refreshCloudAuth]);
+
   const handleBackupToCloud = useCallback(async () => {
+    if (!hasCloudBackupAccess) {
+      setServerMessage('Sign in via Cloudflare Access or provide a valid 64-char token.');
+      return;
+    }
+
     try {
       setServerBusy(true);
       setServerMessage('');
@@ -86,21 +116,28 @@ export default function SettingsModal({ isOpen, onClose }) {
         income,
       });
 
-      const result = await backupToServer(serverToken, payload);
+      const tokenForRequest = isValidServerToken(serverToken) ? serverToken : '';
+      const result = await backupToServer(tokenForRequest, payload);
       setServerMessage(`Cloud backup complete to ${result.storage || 'cloud'} (${result.backupDate || 'ok'})`);
     } catch (err) {
       setServerMessage(`Cloud backup failed: ${err.message}`);
     } finally {
       setServerBusy(false);
     }
-  }, [income, records, serverToken, subs]);
+  }, [hasCloudBackupAccess, income, records, serverToken, subs]);
 
   const handleRestoreFromCloud = useCallback(async () => {
+    if (!hasCloudBackupAccess) {
+      setServerMessage('Sign in via Cloudflare Access or provide a valid 64-char token.');
+      return;
+    }
+
     try {
       setServerBusy(true);
       setServerMessage('');
 
-      const data = await restoreFromServer(serverToken);
+      const tokenForRequest = isValidServerToken(serverToken) ? serverToken : '';
+      const data = await restoreFromServer(tokenForRequest);
 
       if (Array.isArray(data.subscriptions)) {
         setSubs(data.subscriptions);
@@ -130,7 +167,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     } finally {
       setServerBusy(false);
     }
-  }, [serverToken, setIncome, setRecords, setSubs]);
+  }, [hasCloudBackupAccess, serverToken, setIncome, setRecords, setSubs]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Settings">
@@ -202,10 +239,50 @@ export default function SettingsModal({ isOpen, onClose }) {
 
         <div className="border-t border-slate-100 pt-4 dark:border-slate-700">
           <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Social Login (Cloudflare Access)
+          </label>
+          <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">
+            Sign in with your configured social provider (Google/GitHub/etc.) from Cloudflare Zero Trust.
+          </p>
+          <div className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+            {cloudAuth.loading
+              ? 'Checking login status...'
+              : cloudAuth.authenticated
+                ? `Signed in as ${cloudAuth.email || cloudAuth.userId || 'Cloudflare user'}`
+                : 'Not signed in'}
+          </div>
+          <div className="mb-3 flex items-center gap-2">
+            {!cloudAuth.authenticated && (
+              <a
+                href={cloudAuth.loginUrl}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+              >
+                Sign in
+              </a>
+            )}
+            {cloudAuth.authenticated && (
+              <a
+                href={cloudAuth.logoutUrl}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+              >
+                Sign out
+              </a>
+            )}
+            <button
+              onClick={() => refreshCloudAuth(true)}
+              disabled={cloudAuth.loading}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+            >
+              Refresh Status
+            </button>
+          </div>
+
+          <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
             Secure Cloud Backup (Optional)
           </label>
           <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
             Saves data server-side using D1 (`/api/db/backup`) with automatic fallback to R2 (`/api/r2/backup`).
+            You can authenticate using Cloudflare social login or a 64-char legacy token.
           </p>
           <input
             type="password"
@@ -215,19 +292,21 @@ export default function SettingsModal({ isOpen, onClose }) {
             className="mb-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
           />
           <div className="mb-2 text-xs text-slate-400 dark:text-slate-500">
-            {serverToken ? (isValidServerToken(serverToken) ? 'Token format looks valid' : 'Token format invalid') : 'No token set'}
+            {serverToken
+              ? (isValidServerToken(serverToken) ? 'Token format looks valid' : 'Token format invalid')
+              : 'No token set (Cloudflare social login can be used instead)'}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleBackupToCloud}
-              disabled={serverBusy || !isValidServerToken(serverToken)}
+              disabled={serverBusy || !hasCloudBackupAccess}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
             >
               Backup to Cloud
             </button>
             <button
               onClick={handleRestoreFromCloud}
-              disabled={serverBusy || !isValidServerToken(serverToken)}
+              disabled={serverBusy || !hasCloudBackupAccess}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
             >
               Restore from Cloud

@@ -4,7 +4,7 @@ Chameleon is a personal finance web app for managing subscriptions and finance r
 
 - Production: [https://chameleon-finance.pages.dev](https://chameleon-finance.pages.dev)
 - Stack: React, Vite, Zustand, Tailwind, Recharts, Cloudflare Pages Functions
-- Latest production deployment (2026-02-17): [https://06bed3c8.chameleon-finance.pages.dev](https://06bed3c8.chameleon-finance.pages.dev)
+- Latest production deployment (2026-02-17): [https://69885308.chameleon-finance.pages.dev](https://69885308.chameleon-finance.pages.dev)
 
 ## Core Features
 
@@ -12,6 +12,7 @@ Chameleon is a personal finance web app for managing subscriptions and finance r
 - Add/edit/delete records (Income, Utility, Loan, Credit Card)
 - Summary totals (income, expenses, minimum expenses, net balance)
 - Visual dashboards (Bar, Line, Pie, Area, Treemap, Sankey)
+- Multi-file bank statement import (`.csv/.tsv/.txt`) with dedupe + import summary
 - Google Sheets import for finance tabs with header-based mapping
 - Icon/domain support and date/due-date normalization
 
@@ -25,7 +26,7 @@ Chameleon is a personal finance web app for managing subscriptions and finance r
 - Theme toggle (light/dark)
 - Google Sheets sync
 - JSON import/export
-- Optional secure cloud backup/restore via token
+- Optional secure cloud backup/restore via token or Cloudflare social login
 
 ## Data Storage Model
 
@@ -33,11 +34,13 @@ Default behavior:
 - Data is stored locally in browser `localStorage`.
 
 Optional cloud backup:
-- User enters a 64-char token in Settings.
+- User can either:
+  - enter a 64-char token in Settings, or
+  - sign in through Cloudflare Access social login (Google/GitHub/etc).
 - Backup path is database-first:
   - Primary: `POST/GET /api/db/backup` (D1)
   - Fallback: `POST/GET /api/r2/backup` (R2)
-- Auto-backup is enabled when a valid token exists:
+- Auto-backup is enabled when auth is available (valid token or Cloudflare Access session):
   - On data changes (subscriptions, finance records, budget/trends updates)
   - Debounced after edits
   - Every 5 minutes
@@ -62,8 +65,8 @@ npm run test:e2e
 ```
 
 Latest verified status:
-- Vitest: `263/263` passing
-- Playwright E2E: `54/54` passing
+- Vitest: `271/271` passing
+- Playwright E2E: `55/55` passing
 
 ## Cloudflare Setup
 
@@ -73,6 +76,14 @@ Latest verified status:
 - D1 binding for DB backup endpoint:
   - Preferred: `USER_DB`
   - Also accepted by code: `DB` or `ABDULL_DB`
+
+### Social Login via Cloudflare Access
+1. In Cloudflare Zero Trust, add an **Access application** for your Pages production domain (for example `chameleon-finance.pages.dev`).
+2. Add at least one social identity provider (Google/GitHub/etc.) and include it in an Access policy.
+3. Ensure policy allows your intended users.
+4. In the app Settings:
+   - use **Social Login (Cloudflare Access)** section to sign in/out.
+   - `Backup to Cloud` and `Restore from Cloud` will then use the authenticated Access identity automatically (without manual token).
 
 ### Build + Deploy
 
