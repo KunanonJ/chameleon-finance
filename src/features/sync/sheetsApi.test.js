@@ -299,5 +299,41 @@ describe('Sheets API', () => {
       expect(records[1].income).toBe(0);
       expect(records[1].expenses).toBe(320);
     });
+
+    // SA-22
+    it('normalizes date and due date values to yyyy-mm-dd for date inputs', async () => {
+      const csvText = [
+        '"Date","Description","Due Date","Income","Expenses","Type"',
+        '"17/02/2026","UOB Cash","28/02/2026","0","1200","Credit Card"',
+      ].join('\n');
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        text: async () => csvText,
+      });
+
+      const records = await readFinancialRecords('fakeId', 'Sheet1');
+      expect(records).toHaveLength(1);
+      expect(records[0].date).toBe('2026-02-17');
+      expect(records[0].dueDate).toBe('2026-02-28');
+    });
+
+    // SA-23
+    it('supports month-first date format and still outputs yyyy-mm-dd', async () => {
+      const csvText = [
+        '"Date","Description","Due Date","Income","Expenses","Type"',
+        '"2/17/2026","Salary","2/28/2026","5000","0","Income"',
+      ].join('\n');
+
+      global.fetch.mockResolvedValue({
+        ok: true,
+        text: async () => csvText,
+      });
+
+      const records = await readFinancialRecords('fakeId', 'Sheet1');
+      expect(records).toHaveLength(1);
+      expect(records[0].date).toBe('2026-02-17');
+      expect(records[0].dueDate).toBe('2026-02-28');
+    });
   });
 });

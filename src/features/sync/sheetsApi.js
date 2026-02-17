@@ -295,6 +295,89 @@ function parseSheetBoolean(value) {
   return ["true", "yes", "y", "1", "done", "paid"].includes(normalized);
 }
 
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function toIsoDate(year, month, day) {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return "";
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return "";
+  }
+
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+function parseSheetDate(value) {
+  const raw = (value || "").toString().trim();
+  if (!raw) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const ymd = raw.match(/^(\d{4})[/. -](\d{1,2})[/. -](\d{1,2})$/);
+  if (ymd) {
+    const year = Number.parseInt(ymd[1], 10);
+    const month = Number.parseInt(ymd[2], 10);
+    const day = Number.parseInt(ymd[3], 10);
+    return toIsoDate(year, month, day);
+  }
+
+  const dmyOrMdy = raw.match(/^(\d{1,2})[/. -](\d{1,2})[/. -](\d{2,4})$/);
+  if (dmyOrMdy) {
+    const part1 = Number.parseInt(dmyOrMdy[1], 10);
+    const part2 = Number.parseInt(dmyOrMdy[2], 10);
+    const yearRaw = Number.parseInt(dmyOrMdy[3], 10);
+    const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw;
+
+    let day = part1;
+    let month = part2;
+
+    if (part1 <= 12 && part2 > 12) {
+      month = part1;
+      day = part2;
+    } else if (part1 <= 12 && part2 <= 12) {
+      // Ambiguous dates default to day/month to match the app's date UX.
+      day = part1;
+      month = part2;
+    }
+
+    return toIsoDate(year, month, day);
+  }
+
+  // Google Sheets can output serial dates if cells are not formatted as Date.
+  if (/^-?\d+(?:\.\d+)?$/.test(raw)) {
+    const serial = Number.parseFloat(raw);
+    if (Number.isFinite(serial) && serial > 10_000) {
+      const wholeDays = Math.floor(serial);
+      const ms = Date.UTC(1899, 11, 30) + wholeDays * 86400000;
+      const date = new Date(ms);
+      return toIsoDate(
+        date.getUTCFullYear(),
+        date.getUTCMonth() + 1,
+        date.getUTCDate(),
+      );
+    }
+  }
+
+  const fallback = new Date(raw);
+  if (Number.isNaN(fallback.getTime())) return "";
+  return toIsoDate(
+    fallback.getFullYear(),
+    fallback.getMonth() + 1,
+    fallback.getDate(),
+  );
+}
+
 function findHeaderRowIndex(rows) {
   let bestIndex = 0;
   let bestScore = -1;
@@ -394,14 +477,14 @@ export async function readFinancialRecords(spreadsheetId, sheetTab = "Sheet1") {
 
       return {
         id: `sheet_${i}_${importTimestamp}`,
-        date: getValue("date"),
+        date: parseSheetDate(getValue("date")),
         description: getValue("description"),
         interestRate: parseSheetNumber(getValue("interestRate")),
         income: parseSheetNumber(getValue("income")),
         expenses: parseSheetNumber(getValue("expenses")),
         minimumExpenses: parseSheetNumber(getValue("minimumExpenses")),
         balance: parseSheetNumber(getValue("balance")),
-        dueDate: getValue("dueDate"),
+        dueDate: parseSheetDate(getValue("dueDate")),
         paymentMethod: getValue("paymentMethod"),
         howPaid: getValue("howPaid"),
         done: parseSheetBoolean(getValue("done")),
@@ -572,14 +655,14 @@ export async function readAllFinancialRecords(
 
       const record = {
         id: `sheet_${globalIndex}_${importTimestamp}`,
-        date: getValue("date"),
+        date: parseSheetDate(getValue("date")),
         description: getValue("description"),
         interestRate: parseSheetNumber(getValue("interestRate")),
         income: parseSheetNumber(getValue("income")),
         expenses: parseSheetNumber(getValue("expenses")),
         minimumExpenses: parseSheetNumber(getValue("minimumExpenses")),
         balance: parseSheetNumber(getValue("balance")),
-        dueDate: getValue("dueDate"),
+        dueDate: parseSheetDate(getValue("dueDate")),
         paymentMethod: getValue("paymentMethod"),
         howPaid: getValue("howPaid"),
         done: parseSheetBoolean(getValue("done")),
