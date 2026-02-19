@@ -4,13 +4,15 @@ Batch convert bank statement PDFs to CSV.
 
 Outputs:
 - One CSV per source PDF under Statement/CSV/... (mirrors Statement/Categorized layout)
+  using a uniform import schema: Date,Description,Debit,Credit,Balance
 - A combined import CSV at Statement/CSV/all_transactions_for_import.csv
-- A conversion report at Statement/CSV/conversion_report.csv
+- A conversion report at Statement/CSV/conversion_report.json
 """
 
 from __future__ import annotations
 
 import csv
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -377,7 +379,6 @@ def normalize_for_import(row: Dict[str, str]) -> Dict[str, str]:
         "Debit": row.get("debit", ""),
         "Credit": row.get("credit", ""),
         "Balance": row.get("balance", ""),
-        "SourcePDF": row.get("source_pdf", ""),
     }
 
 
@@ -390,34 +391,7 @@ def has_import_amount(import_row: Dict[str, str]) -> bool:
 def main() -> None:
     pdf_paths = sorted(SOURCE_ROOT.rglob("*.pdf"))
 
-    parsed_fieldnames = [
-        "posted_date",
-        "transaction_date",
-        "time",
-        "description",
-        "debit",
-        "credit",
-        "balance",
-        "currency",
-        "foreign_amount",
-        "code",
-        "channel",
-        "parse_method",
-        "page",
-        "raw_line",
-        "source_pdf",
-        "extracted_from_pdf",
-    ]
-    raw_fieldnames = ["page", "raw_line", "source_pdf", "extracted_from_pdf", "parse_method"]
-    import_fieldnames = ["Date", "Description", "Debit", "Credit", "Balance", "SourcePDF"]
-    report_fieldnames = [
-        "source_pdf",
-        "status",
-        "extracted_from_pdf",
-        "parsed_rows",
-        "raw_rows",
-        "output_csv",
-    ]
+    import_fieldnames = ["Date", "Description", "Debit", "Credit", "Balance"]
 
     all_import_rows: List[Dict[str, str]] = []
     all_import_seen: set[Tuple[str, str, str, str, str]] = set()
@@ -431,23 +405,14 @@ def main() -> None:
             twin = find_unlocked_twin(source_pdf)
             if twin is None:
                 output_csv = source_to_output_csv(source_pdf)
-                write_csv(
-                    output_csv,
-                    [{
-                        "page": "",
-                        "raw_line": "",
-                        "source_pdf": str(source_pdf),
-                        "extracted_from_pdf": "",
-                        "parse_method": "unreadable_pdf",
-                    }],
-                    raw_fieldnames,
-                )
+                write_csv(output_csv, [], import_fieldnames)
                 report_rows.append({
                     "source_pdf": str(source_pdf),
                     "status": "unreadable_no_twin",
                     "extracted_from_pdf": "",
-                    "parsed_rows": "0",
-                    "raw_rows": "1",
+                    "import_rows": "0",
+                    "parsed_rows_before_filter": "0",
+                    "scanned_lines": "0",
                     "output_csv": str(output_csv),
                 })
                 continue
@@ -474,58 +439,54 @@ def main() -> None:
             seen_keys.add(dedupe_key)
             parsed_rows.append(parsed)
 
+        import_rows: List[Dict[str, str]] = []
+        for row in parsed_rows:
+            import_row = normalize_for_import(row)
+            if not has_import_amount(import_row):
+                continue
+            import_rows.append(import_row)
+
         output_csv = source_to_output_csv(source_pdf)
-        if parsed_rows:
-            write_csv(output_csv, parsed_rows, parsed_fieldnames)
-            for row in parsed_rows:
-                import_row = normalize_for_import(row)
-                if not has_import_amount(import_row):
-                    continue
-                key = (
-                    import_row["Date"],
-                    import_row["Description"],
-                    import_row["Debit"],
-                    import_row["Credit"],
-                    import_row["Balance"],
-                )
-                if key in all_import_seen:
-                    continue
-                all_import_seen.add(key)
-                all_import_rows.append(import_row)
-            report_rows.append({
-                "source_pdf": str(source_pdf),
-                "status": status,
-                "extracted_from_pdf": str(extraction_pdf),
-                "parsed_rows": str(len(parsed_rows)),
-                "raw_rows": "0",
-                "output_csv": str(output_csv),
-            })
-        else:
-            raw_rows = [{
-                "page": str(rec.page),
-                "raw_line": rec.line,
-                "source_pdf": str(source_pdf),
-                "extracted_from_pdf": str(extraction_pdf),
-                "parse_method": "raw_line",
-            } for rec in lines]
-            write_csv(output_csv, raw_rows, raw_fieldnames)
-            report_rows.append({
-                "source_pdf": str(source_pdf),
-                "status": f"{status}_raw_only",
-                "extracted_from_pdf": str(extraction_pdf),
-                "parsed_rows": "0",
-                "raw_rows": str(len(raw_rows)),
-                "output_csv": str(output_csv),
-            })
+        write_csv(output_csv, import_rows, import_fieldnames)
+
+        for import_row in import_rows:
+            key = (
+                import_row["Date"],
+                import_row["Description"],
+                import_row["Debit"],
+                import_row["Credit"],
+                import_row["Balance"],
+            )
+            if key in all_import_seen:
+                continue
+            all_import_seen.add(key)
+            all_import_rows.append(import_row)
+
+        status_suffix = "" if import_rows else "_no_import_rows"
+        report_rows.append({
+            "source_pdf": str(source_pdf),
+            "status": f"{status}{status_suffix}",
+            "extracted_from_pdf": str(extraction_pdf),
+            "import_rows": str(len(import_rows)),
+            "parsed_rows_before_filter": str(len(parsed_rows)),
+            "scanned_lines": str(len(lines)),
+            "output_csv": str(output_csv),
+        })
 
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     write_csv(OUTPUT_ROOT / "all_transactions_for_import.csv", all_import_rows, import_fieldnames)
-    write_csv(OUTPUT_ROOT / "conversion_report.csv", report_rows, report_fieldnames)
+    report_json_path = OUTPUT_ROOT / "conversion_report.json"
+    with report_json_path.open("w", encoding="utf-8") as f:
+        json.dump(report_rows, f, ensure_ascii=False, indent=2)
+
+    legacy_report_csv = OUTPUT_ROOT / "conversion_report.csv"
+    if legacy_report_csv.exists():
+        legacy_report_csv.unlink()
 
     print(f"Converted {len(pdf_paths)} PDFs.")
     print(f"Per-file CSVs: {OUTPUT_ROOT}")
     print(f"Combined import CSV: {OUTPUT_ROOT / 'all_transactions_for_import.csv'}")
-    print(f"Report CSV: {OUTPUT_ROOT / 'conversion_report.csv'}")
+    print(f"Report JSON: {report_json_path}")
 
 
 if __name__ == "__main__":
