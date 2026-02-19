@@ -48,20 +48,28 @@ export default function FinanceSection() {
     <div className="space-y-6">
       {/* Step 1: Record Management */}
       {step === 1 && (
-        <>
+        <div className={records.length > 0 ? 'space-y-6 pb-24 sm:pb-28' : 'space-y-6'}>
           <FinanceSummary />
           <FinanceToolbar />
           <FinanceList onEdit={handleEdit} onOpenModal={handleOpenModal} />
 
           {records.length > 0 && (
-            <button
-              onClick={() => setStep(2)}
-              className="w-full rounded-2xl bg-indigo-600 py-3.5 font-bold text-white shadow-lg transition-all hover:bg-indigo-700 hover:shadow-xl"
+            <div
+              className="fixed inset-x-0 bottom-0 z-30 px-3 pb-3 sm:px-6"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
             >
-              View Dashboard
-            </button>
+              <div className="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+                <button
+                  onClick={() => setStep(2)}
+                  data-testid="finance-view-dashboard-button"
+                  className="w-full rounded-xl bg-indigo-600 py-3.5 font-bold text-white shadow-lg transition-all hover:bg-indigo-700 hover:shadow-xl"
+                >
+                  View Dashboard
+                </button>
+              </div>
+            </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Step 2: Dashboard */}

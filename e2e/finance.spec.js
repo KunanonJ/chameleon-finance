@@ -189,6 +189,32 @@ test.describe('Finance - Add Record', () => {
     await expect(page.locator('text=Coffee').first()).toBeVisible();
     await expect(page.locator('text=Rent').first()).toBeVisible();
   });
+
+  test('keeps View Dashboard accessible with large imported statement data', async ({ page }) => {
+    const lines = ['Date,Description,Amount'];
+    for (let i = 1; i <= 220; i++) {
+      const day = String((i % 28) + 1).padStart(2, '0');
+      lines.push(`2026-02-${day},ImportTxn ${i},-${(10 + i).toFixed(2)}`);
+    }
+
+    const input = page.locator('[data-testid="statement-upload-input"]');
+    await input.setInputFiles({
+      name: 'large-bank-statement.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(lines.join('\n')),
+    });
+
+    await expect(page.locator('text=Statements processed')).toBeVisible();
+
+    const viewDashboardBtn = page.getByTestId('finance-view-dashboard-button');
+    await expect(viewDashboardBtn).toBeVisible();
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(viewDashboardBtn).toBeVisible();
+
+    await viewDashboardBtn.click();
+    await expect(page.locator('text=Back')).toBeVisible();
+  });
 });
 
 test.describe('Finance - Record Management', () => {
