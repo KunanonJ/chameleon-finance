@@ -19,10 +19,8 @@ import ViewToggle from '@features/visualizations/ViewToggle';
 import BudgetIndicator from '@features/budget/BudgetIndicator';
 import UpcomingRenewals from '@features/reminders/UpcomingRenewals';
 import SyncIndicator from '@features/sync/SyncIndicator';
-import { useSheetsSync } from '@features/sync/useSheetsSync';
-import { useFinanceSheetsSync } from '@features/finance/useFinanceSheetsSync';
+import { useAutoSync } from '@features/sync/useAutoSync';
 
-const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const AUTO_BACKUP_INTERVAL_MS = 5 * 60 * 1000;
 const AUTO_BACKUP_DEBOUNCE_MS = 1500;
 const AddSubscriptionModal = lazy(() => import('@features/subscriptions/AddSubscriptionModal'));
@@ -46,6 +44,7 @@ function SectionLoader({ label = 'Loading...' }) {
 
 export default function App() {
   useTheme();
+  useAutoSync();
 
   const subs = useSubscriptionStore((s) => s.subs);
   const income = useSubscriptionStore((s) => s.income);
@@ -57,9 +56,6 @@ export default function App() {
   const initRates = useCurrencyStore((s) => s.initRates);
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
-  const { isConnected: isSheetsConnected, pull: pullSheets } = useSheetsSync();
-  const { pullFinance } = useFinanceSheetsSync();
-  const isAutoSyncingRef = useRef(false);
   const autoBackupDataRef = useRef({ subs: [], records: [], income: 0 });
   const autoBackupTimeoutRef = useRef(null);
   const lastAutoBackupPayloadRef = useRef('');
@@ -74,50 +70,6 @@ export default function App() {
   useEffect(() => {
     initRates();
   }, [initRates]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const runAutoSync = async () => {
-      if (cancelled || isAutoSyncingRef.current) return;
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
-      if (!isSheetsConnected()) return;
-
-      isAutoSyncingRef.current = true;
-      try {
-        await Promise.all([
-          pullSheets(),
-          pullFinance(),
-        ]);
-      } catch (err) {
-        console.warn('Auto sync failed:', err);
-      } finally {
-        isAutoSyncingRef.current = false;
-      }
-    };
-
-    // Initial background pull when app loads (if connected)
-    runAutoSync();
-
-    const intervalId = window.setInterval(runAutoSync, AUTO_SYNC_INTERVAL_MS);
-    const onOnline = () => runAutoSync();
-    const onFocus = () => runAutoSync();
-    const onVisibilityChange = () => {
-      if (!document.hidden) runAutoSync();
-    };
-
-    window.addEventListener('online', onOnline);
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [isSheetsConnected, pullSheets, pullFinance]);
 
   useEffect(() => {
     autoBackupDataRef.current = { subs, records, income };

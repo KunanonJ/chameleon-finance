@@ -18,6 +18,10 @@ export const HOW_PAID_OPTIONS = [
 export const FINANCE_TEMPLATE_ID = '1zhSnlIoqUSCkPMOCPT711rnsaIEDHhCjnBHixnBzXeo';
 export const FINANCE_TEMPLATE_COPY_URL = `https://docs.google.com/spreadsheets/d/${FINANCE_TEMPLATE_ID}/copy`;
 export const FINANCE_SHEET_TAB = 'Sheet1';
+export const FINANCE_MONTH_TABS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 
 export function getTypeColor(typeId) {
   const t = FINANCE_TYPES.find((ft) => ft.id === typeId);

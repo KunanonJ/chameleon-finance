@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFinanceStore } from '@store/financeStore';
 import { exportFinanceCSV } from '@shared/lib/financeUtils';
 import FinanceSummary from '@features/finance/FinanceSummary';
@@ -8,13 +8,35 @@ import FinanceDashboard from '@features/finance/FinanceDashboard';
 import FinanceRecordModal from '@features/finance/FinanceRecordModal';
 import ViewToggle from '@features/visualizations/ViewToggle';
 
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export default function FinanceSection() {
   const [step, setStep] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [currentView, setCurrentView] = useState('bar');
+  const [selectedMonth, setSelectedMonth] = useState('all');
 
   const records = useFinanceStore((s) => s.records);
+
+  const monthsWithData = useMemo(() => {
+    const months = new Set();
+    for (const r of records) {
+      if (!r.date) continue;
+      const d = new Date(r.date);
+      if (!isNaN(d.getTime())) months.add(d.getMonth());
+    }
+    return months;
+  }, [records]);
+
+  const filteredRecords = useMemo(() => {
+    if (selectedMonth === 'all') return records;
+    return records.filter((r) => {
+      if (!r.date) return false;
+      const d = new Date(r.date);
+      return !isNaN(d.getTime()) && d.getMonth() === selectedMonth;
+    });
+  }, [records, selectedMonth]);
 
   const handleEdit = (id) => {
     setEditId(id);
@@ -88,8 +110,40 @@ export default function FinanceSection() {
             <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
           </div>
 
-          <FinanceSummary />
-          <FinanceDashboard currentView={currentView} />
+          {/* Month Filter */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <button
+              onClick={() => setSelectedMonth('all')}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                selectedMonth === 'all'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'border border-slate-200 text-slate-500 hover:bg-slate-50 hover:shadow-sm dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'
+              }`}
+            >
+              Overview
+            </button>
+            {MONTH_LABELS.map((label, i) => {
+              const hasData = monthsWithData.has(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedMonth(i)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                    selectedMonth === i
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : hasData
+                        ? 'border border-slate-200 text-slate-500 hover:bg-slate-50 hover:shadow-sm dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'
+                        : 'border border-slate-100 text-slate-300 dark:border-slate-700 dark:text-slate-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          <FinanceSummary records={filteredRecords} />
+          <FinanceDashboard currentView={currentView} records={filteredRecords} />
 
           <button
             onClick={handleExportCSV}

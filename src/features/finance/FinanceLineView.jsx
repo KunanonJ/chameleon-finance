@@ -6,10 +6,9 @@ import { formatCurrency } from '@shared/lib/currencies';
 import { computeMonthlyTrend } from '@shared/lib/financeUtils';
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@shared/ui/Chart';
 
-const MONTHS_TO_SHOW = 12;
-
-export default function FinanceLineView() {
-  const records = useFinanceStore((s) => s.records);
+export default function FinanceLineView({ records: recordsProp }) {
+  const storeRecords = useFinanceStore((s) => s.records);
+  const records = recordsProp || storeRecords;
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
 

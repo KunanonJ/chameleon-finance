@@ -1,8 +1,19 @@
 import { useState } from 'react';
 import { useSheetsSync } from '@features/sync/useSheetsSync';
+import { useAutoSyncStore } from '@store/autoSyncStore';
+
+const INTERVAL_OPTIONS = [
+  { label: '1 min', value: 60000 },
+  { label: '5 min', value: 300000 },
+  { label: '15 min', value: 900000 },
+];
 
 export default function GoogleSheetsSettings() {
   const { syncStatus, lastSyncTime, lastError, isConnected, connect, disconnect, pull } = useSheetsSync();
+  const autoSyncEnabled = useAutoSyncStore((s) => s.autoSyncEnabled);
+  const autoSyncInterval = useAutoSyncStore((s) => s.autoSyncInterval);
+  const setAutoSyncEnabled = useAutoSyncStore((s) => s.setAutoSyncEnabled);
+  const setAutoSyncInterval = useAutoSyncStore((s) => s.setAutoSyncInterval);
   const [sheetUrl, setSheetUrl] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -80,6 +91,39 @@ export default function GoogleSheetsSettings() {
             >
               Disconnect
             </button>
+          </div>
+
+          {/* Auto-sync Settings */}
+          <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-600">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Auto-sync</span>
+              <button
+                onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+                className={`relative h-5 w-9 rounded-full transition-colors ${
+                  autoSyncEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    autoSyncEnabled ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+            {autoSyncEnabled && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-slate-400 dark:text-slate-500">Every</span>
+                <select
+                  value={autoSyncInterval}
+                  onChange={(e) => setAutoSyncInterval(Number(e.target.value))}
+                  className="rounded-lg border border-slate-200 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                >
+                  {INTERVAL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       ) : (

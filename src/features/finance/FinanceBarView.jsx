@@ -7,8 +7,9 @@ import { computeBreakdownByType } from '@shared/lib/financeUtils';
 import { getTypeColor, getTypeLabel } from '@shared/lib/financeConstants';
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@shared/ui/Chart';
 
-export default function FinanceBarView() {
-  const records = useFinanceStore((s) => s.records);
+export default function FinanceBarView({ records: recordsProp }) {
+  const storeRecords = useFinanceStore((s) => s.records);
+  const records = recordsProp || storeRecords;
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
 

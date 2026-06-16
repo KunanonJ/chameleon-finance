@@ -234,12 +234,13 @@ function d3_interpolateNumber(a, b) {
     };
 }
 
-export default function FinanceSankeyView() {
+export default function FinanceSankeyView({ records: recordsProp }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredId, setHoveredId] = useState(null);
 
-  const records = useFinanceStore((s) => s.records);
+  const storeRecords = useFinanceStore((s) => s.records);
+  const records = recordsProp || storeRecords;
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const currencies = useCurrencyStore((s) => s.currencies);
 
