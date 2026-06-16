@@ -13,5 +13,12 @@
       "binding": "R2_BUCKET",
       "bucket_name": "subgrid-storage"
     }
+  ],
+  "d1_databases": [
+    {
+      "binding": "USER_DB",
+      "database_name": "chameleon-finance-db",
+      "database_id": "5c279de4-9b53-455c-af95-6ca173b42d4f"
+    }
   ]
 }
