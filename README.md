@@ -470,9 +470,25 @@ npm run preview
 
 ### Cloudflare Deploy (Pages)
 
+Production is deployed on Cloudflare Pages under the GoGoCash Cloudflare account
+(`187ab61ed9dbc6e616cb23e6b95aa8f1`).
+
+- Project: `chameleon-finance`
+- Production URL: `https://chameleon-finance-c4y.pages.dev`
+- Production branch: `main`
+- D1 database: `chameleon-finance-db` (`5c279de4-9b53-455c-af95-6ca173b42d4f`)
+- R2 bucket: `subgrid-storage`
+- Analytics Engine dataset: `subgrid_events`
+
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
+CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 npx wrangler pages deploy dist --project-name=chameleon-finance --branch main
+```
+
+Verify the deployment:
+
+```bash
+curl https://chameleon-finance-c4y.pages.dev/api/health
 ```
 
 ---
@@ -496,9 +512,9 @@ npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=t
 ### Wrangler configs
 
 - `wrangler.jsonc` (current Pages-oriented config):
-  - `ANALYTICS`, `R2_BUCKET`
+  - `ANALYTICS`, `R2_BUCKET`, `USER_DB`
 - `wrangler.toml` (compatibility mirror for local/CLI workflows):
-  - `ANALYTICS`, `R2_BUCKET`
+  - `ANALYTICS`, `R2_BUCKET`, `USER_DB`
 
 The code resolves modern binding names first and keeps legacy `ABDULL_*` fallbacks for older
 utility endpoints.
