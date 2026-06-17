@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">Open Finance logo option 5 - Marble Tablet</title>
-  <desc id="desc">A marble finance tablet with local ledger columns, cloud-backup arc, and Greek pediment geometry.</desc>
-  <path d="M58 30h140l24 34v154c0 13-10 23-23 23H57c-13 0-23-10-23-23V64z" fill="#f3ead3" stroke="#15140f" stroke-width="7" stroke-linejoin="miter"/>
-  <path d="M58 30v34h164" fill="none" stroke="#b78c38" stroke-width="6" stroke-linejoin="miter"/>
-  <path d="M70 91 128 58l58 33z" fill="#fbf6e9" stroke="#18344f" stroke-width="8" stroke-linejoin="miter"/>
-  <path d="M78 101h100M85 119h86" stroke="#18344f" stroke-width="9" stroke-linecap="square"/>
-  <path d="M76 154h104M76 178h68M76 202h88" stroke="#315f8b" stroke-width="8" stroke-linecap="square"/>
-  <path d="M188 177c14 0 25 10 25 22 0 13-11 22-25 22h-33c-12 0-22-8-22-19 0-9 7-17 17-19 5-10 17-16 30-12 3 1 6 3 8 6z" fill="#f8f0d8" stroke="#18344f" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M144 197h55" stroke="#5aa889" stroke-width="7" stroke-linecap="square"/>
-  <circle cx="207" cy="222" r="8" fill="#ed6f5c"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" role="img" viewBox="0 0 256 256"><title id="title">Open Finance logo option 5 - Marble Tablet</title><desc id="desc">A marble finance tablet with local ledger columns, cloud-backup arc, and Greek pediment geometry.</desc><path fill="#f3ead3" stroke="#15140f" stroke-linejoin="miter" stroke-width="7" d="M58 30h140l24 34v154c0 13-10 23-23 23H57c-13 0-23-10-23-23V64z"/><path fill="none" stroke="#b78c38" stroke-linejoin="miter" stroke-width="6" d="M58 30v34h164"/><path fill="#fbf6e9" stroke="#18344f" stroke-linejoin="miter" stroke-width="8" d="M70 91 128 58l58 33z"/><path stroke="#18344f" stroke-linecap="square" stroke-width="9" d="M78 101h100M85 119h86"/><path stroke="#315f8b" stroke-linecap="square" stroke-width="8" d="M76 154h104M76 178h68M76 202h88"/><path fill="#f8f0d8" stroke="#18344f" stroke-linejoin="round" stroke-width="7" d="M188 177c14 0 25 10 25 22 0 13-11 22-25 22h-33c-12 0-22-8-22-19 0-9 7-17 17-19 5-10 17-16 30-12 3 1 6 3 8 6z"/><path stroke="#5aa889" stroke-linecap="square" stroke-width="7" d="M144 197h55"/><circle cx="207" cy="222" r="8" fill="#ed6f5c"/></svg>

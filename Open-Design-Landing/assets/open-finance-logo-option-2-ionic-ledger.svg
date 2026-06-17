@@ -1,14 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">Open Finance logo option 2 - Ionic Ledger</title>
-  <desc id="desc">An Ionic column merged with a private finance ledger, set in a squared Aegean seal.</desc>
-  <rect x="22" y="22" width="212" height="212" rx="24" fill="#f3ead3" stroke="#15140f" stroke-width="7"/>
-  <path d="M42 42h172v172H42z" fill="none" stroke="#315f8b" stroke-width="4" stroke-dasharray="18 10"/>
-  <path d="M64 69c10-13 31-13 42 0M59 83h52M65 96h40" fill="none" stroke="#18344f" stroke-width="9" stroke-linecap="square"/>
-  <rect x="73" y="105" width="10" height="70" fill="#18344f"/>
-  <rect x="91" y="105" width="10" height="70" fill="#18344f"/>
-  <path d="M61 181h52M68 195h38" fill="none" stroke="#18344f" stroke-width="9" stroke-linecap="square"/>
-  <path d="M126 75h58c13 0 23 10 23 23v73c0 13-10 23-23 23h-58z" fill="#fbf6e9" stroke="#15140f" stroke-width="7"/>
-  <path d="M146 105h39M146 128h39M146 151h28" stroke="#315f8b" stroke-width="8" stroke-linecap="square"/>
-  <path d="M128 75v119" stroke="#b78c38" stroke-width="6" stroke-linecap="square"/>
-  <circle cx="187" cy="177" r="10" fill="#ed6f5c"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" role="img" viewBox="0 0 256 256"><title id="title">Open Finance logo option 2 - Ionic Ledger</title><desc id="desc">An Ionic column merged with a private finance ledger, set in a squared Aegean seal.</desc><rect width="212" height="212" x="22" y="22" fill="#f3ead3" stroke="#15140f" stroke-width="7" rx="24"/><path fill="none" stroke="#315f8b" stroke-dasharray="18 10" stroke-width="4" d="M42 42h172v172H42z"/><path fill="none" stroke="#18344f" stroke-linecap="square" stroke-width="9" d="M64 69c10-13 31-13 42 0M59 83h52M65 96h40"/><rect width="10" height="70" x="73" y="105" fill="#18344f"/><rect width="10" height="70" x="91" y="105" fill="#18344f"/><path fill="none" stroke="#18344f" stroke-linecap="square" stroke-width="9" d="M61 181h52M68 195h38"/><path fill="#fbf6e9" stroke="#15140f" stroke-width="7" d="M126 75h58c13 0 23 10 23 23v73c0 13-10 23-23 23h-58z"/><path stroke="#315f8b" stroke-linecap="square" stroke-width="8" d="M146 105h39M146 128h39M146 151h28"/><path stroke="#b78c38" stroke-linecap="square" stroke-width="6" d="M128 75v119"/><circle cx="187" cy="177" r="10" fill="#ed6f5c"/></svg>

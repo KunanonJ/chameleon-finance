@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">Open Finance logo option 4 - Meander Monogram</title>
-  <desc id="desc">An angular OF monogram built from Greek-key ledger paths, optimized for small app and nav use.</desc>
-  <rect x="24" y="24" width="208" height="208" rx="18" fill="#f8f0d8" stroke="#15140f" stroke-width="8"/>
-  <path d="M55 62h146v31h-28V78H83v100h34v-26H94v-29h58v84H55z" fill="#18344f"/>
-  <path d="M140 62h61v31h-31v31h31v30h-31v53h-30z" fill="#315f8b"/>
-  <path d="M55 62h146v31h-28V78H83v100h34v-26H94v-29h58v84H55z" fill="none" stroke="#f8f0d8" stroke-width="5" stroke-linejoin="miter"/>
-  <path d="M140 62h61v31h-31v31h31v30h-31v53h-30z" fill="none" stroke="#f8f0d8" stroke-width="5" stroke-linejoin="miter"/>
-  <path d="M47 47h42v12H59v30H47zM209 47v42h-12V59h-30V47zM209 209h-42v-12h30v-30h12zM47 209v-42h12v30h30v12z" fill="#b78c38"/>
-  <circle cx="202" cy="202" r="9" fill="#ed6f5c"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" role="img" viewBox="0 0 256 256"><title id="title">Open Finance logo option 4 - Meander Monogram</title><desc id="desc">An angular OF monogram built from Greek-key ledger paths, optimized for small app and nav use.</desc><rect width="208" height="208" x="24" y="24" fill="#f8f0d8" stroke="#15140f" stroke-width="8" rx="18"/><path fill="#18344f" d="M55 62h146v31h-28V78H83v100h34v-26H94v-29h58v84H55z"/><path fill="#315f8b" d="M140 62h61v31h-31v31h31v30h-31v53h-30z"/><path fill="none" stroke="#f8f0d8" stroke-linejoin="miter" stroke-width="5" d="M55 62h146v31h-28V78H83v100h34v-26H94v-29h58v84H55z"/><path fill="none" stroke="#f8f0d8" stroke-linejoin="miter" stroke-width="5" d="M140 62h61v31h-31v31h31v30h-31v53h-30z"/><path fill="#b78c38" d="M47 47h42v12H59v30H47zM209 47v42h-12V59h-30V47zM209 209h-42v-12h30v-30h12zM47 209v-42h12v30h30v12z"/><circle cx="202" cy="202" r="9" fill="#ed6f5c"/></svg>

@@ -1,15 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">Open Finance logo option 3 - Owl Drachma</title>
-  <desc id="desc">A geometric Athenian owl coin with ledger eyes and private finance linework.</desc>
-  <circle cx="128" cy="128" r="116" fill="#efe7d2" stroke="#15140f" stroke-width="7"/>
-  <circle cx="128" cy="128" r="98" fill="#f8f0d8" stroke="#b78c38" stroke-width="5"/>
-  <path d="M68 81 105 66l23 24 23-24 37 15-16 99-44 25-44-25z" fill="#fbf6e9" stroke="#18344f" stroke-width="8" stroke-linejoin="miter"/>
-  <path d="M86 93h33l9 21 9-21h33" fill="none" stroke="#315f8b" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter"/>
-  <circle cx="101" cy="122" r="22" fill="#18344f"/>
-  <circle cx="155" cy="122" r="22" fill="#18344f"/>
-  <path d="M91 122h20M145 122h20" stroke="#f8f0d8" stroke-width="7" stroke-linecap="square"/>
-  <path d="M128 125l-13 25h26z" fill="#b78c38" stroke="#15140f" stroke-width="5" stroke-linejoin="miter"/>
-  <path d="M93 161h70M103 178h50" stroke="#18344f" stroke-width="8" stroke-linecap="square"/>
-  <path d="M58 202h140" stroke="#315f8b" stroke-width="5" stroke-dasharray="14 9"/>
-  <circle cx="206" cy="202" r="8" fill="#ed6f5c"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-labelledby="title desc" role="img" viewBox="0 0 256 256"><title id="title">Open Finance logo option 3 - Owl Drachma</title><desc id="desc">A geometric Athenian owl coin with ledger eyes and private finance linework.</desc><circle cx="128" cy="128" r="116" fill="#efe7d2" stroke="#15140f" stroke-width="7"/><circle cx="128" cy="128" r="98" fill="#f8f0d8" stroke="#b78c38" stroke-width="5"/><path fill="#fbf6e9" stroke="#18344f" stroke-linejoin="miter" stroke-width="8" d="M68 81 105 66l23 24 23-24 37 15-16 99-44 25-44-25z"/><path fill="none" stroke="#315f8b" stroke-linecap="square" stroke-linejoin="miter" stroke-width="8" d="M86 93h33l9 21 9-21h33"/><circle cx="101" cy="122" r="22" fill="#18344f"/><circle cx="155" cy="122" r="22" fill="#18344f"/><path stroke="#f8f0d8" stroke-linecap="square" stroke-width="7" d="M91 122h20M145 122h20"/><path fill="#b78c38" stroke="#15140f" stroke-linejoin="miter" stroke-width="5" d="M128 125l-13 25h26z"/><path stroke="#18344f" stroke-linecap="square" stroke-width="8" d="M93 161h70M103 178h50"/><path stroke="#315f8b" stroke-dasharray="14 9" stroke-width="5" d="M58 202h140"/><circle cx="206" cy="202" r="8" fill="#ed6f5c"/></svg>
