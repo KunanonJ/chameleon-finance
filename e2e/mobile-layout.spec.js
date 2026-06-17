@@ -50,10 +50,10 @@ for (const viewport of MOBILE_VIEWPORTS) {
     test.use({ viewport: { width: viewport.width, height: viewport.height } });
 
     test('finance + subscriptions screens stay aligned', async ({ page }) => {
-      await page.goto('/');
+      await page.goto('/app');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
-      await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
+      await page.getByRole('heading', { name: 'Open Finance' }).waitFor();
 
       // Finance step 1 (empty state)
       await assertNoHorizontalOverflow(page, `${viewport.name} finance step1 empty`);

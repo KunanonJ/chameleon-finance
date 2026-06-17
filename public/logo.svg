@@ -11,9 +11,9 @@
   </defs>
   <!-- Rounded square background -->
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <!-- Chameleon body - rounder, friendlier shape -->
+  <!-- Open Finance mark body - rounder, friendlier shape -->
   <path d="M155 330 C135 290 130 240 155 195 C180 150 225 125 275 118 C325 112 360 130 380 160 C400 190 405 230 388 270 C370 310 340 330 305 338 L320 355 C335 368 325 385 305 382 L255 368 C215 362 180 350 155 330Z" fill="url(#body)" opacity="0.95"/>
-  <!-- Chameleon head - bigger and rounder -->
+  <!-- Open Finance mark head - bigger and rounder -->
   <ellipse cx="370" cy="198" rx="68" ry="62" fill="url(#body)" opacity="0.95"/>
   <!-- Snout - shorter and rounder -->
   <path d="M410 185 C425 180 435 184 438 193 C432 197 420 195 410 193Z" fill="#99F0D6" opacity="0.8"/>

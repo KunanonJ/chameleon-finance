@@ -1,0 +1,115 @@
+{
+  "brand": {
+    "name": "Open Finance",
+    "mark": "OF",
+    "tagline": "Private money tracking, without the spreadsheet sprawl",
+    "description": "Open Finance helps people track subscriptions, budgets, spending, and finance records in one private workspace. It is a local-first finance tracker: users can manage money data on their device, import statements, review dashboards, sync with Google Sheets if they want, and optionally back up to Cloudflare.",
+    "location": "Bangkok",
+    "license": "Open-source",
+    "version": "Preview",
+    "year": "2026",
+    "primary_url": "https://open-finance.ai",
+    "contact_email": ""
+  },
+  "nav": [
+    { "label": "Ledger", "href": "#about", "badge": "local" },
+    { "label": "Budgets", "href": "#capabilities", "badge": "4" },
+    { "label": "Imports", "href": "#desk", "badge": "csv" },
+    { "label": "Sync", "href": "#method", "badge": "opt-in" },
+    { "label": "Privacy", "href": "#privacy", "badge": "device" }
+  ],
+  "hero": {
+    "label": "Bangkok / local-first finance",
+    "headline": ["Private money tracking, without the ", { "em": "spreadsheet sprawl" }, "."],
+    "lead": "Subscriptions, budgets, statements, spending records, and finance dashboards live in one private workspace on the user's device.",
+    "primary": "Open the preview",
+    "secondary": "Read the method",
+    "stats": [
+      { "value": "1", "label": "private workspace" },
+      { "value": "4", "label": "money routines" },
+      { "value": "2", "label": "optional sync paths" }
+    ],
+    "index": ["Import statements", "Review budgets", "Sync Sheets", "Back up to Cloudflare"]
+  },
+  "about": {
+    "kicker": "The premise",
+    "headline": ["Finance records should feel ", { "em": "owned" }, ", not outsourced."],
+    "body": "Open Finance is for people who want the clarity of a finance dashboard without handing every transaction to another cloud-first app. The product keeps the workspace local by default, then lets the user decide when to connect Google Sheets or Cloudflare backup."
+  },
+  "capabilities": {
+    "cards": [
+      {
+        "num": "01",
+        "tag": "Subscriptions",
+        "title": "Recurring spend radar",
+        "body": "Track active plans, renewal dates, category drift, and cancellation candidates in a compact ledger."
+      },
+      {
+        "num": "02",
+        "tag": "Budgets",
+        "title": "Envelope-style planning",
+        "body": "Budget by month, category, and personal rule without turning the interface into a spreadsheet clone."
+      },
+      {
+        "num": "03",
+        "tag": "Statements",
+        "title": "Import, clean, review",
+        "body": "Bring in bank exports, map columns, flag duplicates, and keep source files visible for audit."
+      },
+      {
+        "num": "04",
+        "tag": "Records",
+        "title": "A durable finance archive",
+        "body": "Keep notes, receipts, tax-relevant records, and spending context close to the transactions they explain."
+      }
+    ]
+  },
+  "labs": {
+    "cards": [
+      { "title": "Subscription Watch", "type": "Module", "body": "Renewal timeline, price-change notes, and cancel-by reminders." },
+      { "title": "Budget Board", "type": "Dashboard", "body": "Monthly envelopes with actuals, remaining room, and rollover notes." },
+      { "title": "Statement Import", "type": "Flow", "body": "CSV mapping, duplicate review, and confidence labels before commit." },
+      { "title": "Sheet Mirror", "type": "Opt-in sync", "body": "Push selected views to Google Sheets when collaboration beats privacy." },
+      { "title": "Cloudflare Vault", "type": "Backup", "body": "Encrypted off-device copy when the user chooses resilience." }
+    ]
+  },
+  "method": {
+    "steps": [
+      { "num": "01", "title": "Keep it local", "body": "Start with device-first storage and an explicit workspace boundary." },
+      { "num": "02", "title": "Normalize imports", "body": "Turn messy statement exports into reviewable rows before they enter the ledger." },
+      { "num": "03", "title": "Show the money map", "body": "Surface subscriptions, budgets, spending, and records as one connected system." },
+      { "num": "04", "title": "Sync only by choice", "body": "Google Sheets and Cloudflare backup remain optional, visible, and reversible." }
+    ]
+  },
+  "work": {
+    "cards": [
+      { "title": "Ledger view", "body": "A dense transaction table with filters, category chips, and duplicate states." },
+      { "title": "Budget studio", "body": "A monthly planning surface that balances quiet editorial hierarchy with product clarity." }
+    ]
+  },
+  "testimonial": {
+    "quote": "Private finance software should make the local copy feel like the source of truth.",
+    "author": "Open Finance product note",
+    "role": "Bangkok / Preview"
+  },
+  "cta": {
+    "headline": ["Start with the ", { "em": "local ledger" }, "."],
+    "lead": "Open the preview, import a statement, and decide later whether any part of the workspace deserves to sync.",
+    "primary": "Visit open-finance.ai",
+    "secondary": "Review privacy model"
+  },
+  "footer": {
+    "mega": ["Open ", { "em": "Finance" }, "."],
+    "columns": [
+      { "heading": "Product", "links": ["Ledger", "Budgets", "Subscriptions", "Records"] },
+      { "heading": "Data", "links": ["Local storage", "Statement imports", "Google Sheets", "Cloudflare backup"] },
+      { "heading": "Trust", "links": ["Private by default", "User-controlled sync", "Review before commit", "Portable exports"] },
+      { "heading": "Origin", "links": ["Bangkok", "Open-source", "Preview", "2026"] }
+    ]
+  },
+  "imagery": {
+    "strategy": "placeholder",
+    "assets_path": "./assets",
+    "manifest": "./assets/image-manifest.json"
+  }
+}

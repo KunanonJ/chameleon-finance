@@ -1,0 +1,1449 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open Finance - Private money tracking, without the spreadsheet sprawl</title>
+  <meta name="description" content="Open Finance is a Bangkok-origin, local-first finance tracker for subscriptions, budgets, spending records, imports, dashboards, Google Sheets sync, and optional Cloudflare backup." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,400;1,500;1,600;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #efe7d2;
+      --paper-warm: #ece4cf;
+      --paper-dark: #ddd2b6;
+      --ink: #15140f;
+      --ink-soft: #2a2620;
+      --ink-mute: #5a5448;
+      --ink-faint: #8b8676;
+      --coral: #ed6f5c;
+      --coral-soft: #f08e7c;
+      --mustard: #e9b94a;
+      --finance: #5aa889;
+      --finance-dark: #226650;
+      --aegean: #315f8b;
+      --aegean-dark: #18344f;
+      --marble: #f4efe3;
+      --coin: #b78c38;
+      --bone: #f7f1de;
+      --line: rgba(21, 20, 15, 0.16);
+      --line-soft: rgba(21, 20, 15, 0.08);
+      --line-faint: rgba(21, 20, 15, 0.05);
+      --shadow: 0 30px 60px -30px rgba(21, 20, 15, 0.18);
+      --serif: 'Playfair Display', 'Times New Roman', Georgia, serif;
+      --sans: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', Menlo, ui-monospace, monospace;
+      --meander: repeating-linear-gradient(90deg, color-mix(in srgb, var(--aegean) 74%, transparent) 0 12px, transparent 12px 19px, color-mix(in srgb, var(--aegean) 74%, transparent) 19px 31px, transparent 31px 38px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--paper); color: var(--ink); }
+    body {
+      min-height: 100%;
+      overflow-x: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(106, 92, 56, 0.07) 0, transparent 28%),
+        radial-gradient(circle at 88% 72%, rgba(106, 92, 56, 0.06) 0, transparent 32%),
+        linear-gradient(90deg, rgba(49, 95, 139, 0.035) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(49, 95, 139, 0.03) 1px, transparent 1px),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.16 0 0 0 0 0.12 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+      background-size: auto, auto, 96px 96px, 96px 96px, 240px 240px;
+      mix-blend-mode: multiply;
+      opacity: 0.92;
+    }
+
+    img { display: block; max-width: 100%; height: auto; }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    .shell { position: relative; z-index: 2; }
+    .container {
+      width: min(100% - 48px, 1360px);
+      margin: 0 auto;
+      position: relative;
+    }
+    .wide { width: min(100% - 48px, 1480px); }
+
+    .side-rail {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 36px;
+      z-index: 3;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-color: var(--line-faint);
+      border-style: solid;
+    }
+    .side-rail.left { left: 0; border-width: 0 1px 0 0; }
+    .side-rail.right { right: 0; border-width: 0 0 0 1px; }
+    .rail-text {
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.42em;
+      line-height: 1;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      white-space: nowrap;
+    }
+    .side-rail.right .rail-text { transform: rotate(180deg); }
+
+    .topbar {
+      position: relative;
+      z-index: 4;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      padding: 10px 0;
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .topbar-inner b { color: var(--ink); }
+    .topbar-mid, .topbar-right { display: inline-flex; align-items: center; gap: 18px; }
+    .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      background: var(--coral);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 22px 0;
+      border-bottom: 1px solid transparent;
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateY(0);
+      transition: transform 360ms cubic-bezier(0.22, 0.61, 0.36, 1), border-color 180ms ease;
+    }
+    .nav.is-hidden { transform: translateY(-100%); pointer-events: none; }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--sans);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .brand-name {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .brand-name em {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.045em;
+    }
+    .brand-meta {
+      margin-left: 4px;
+      padding-left: 14px;
+      border-left: 1px solid var(--line);
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+    .brand-meta b { display: block; color: var(--ink); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 160ms ease;
+    }
+    .nav-links a:hover { color: var(--coral); }
+    .badge {
+      margin-left: 6px;
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .nav-cta, .btn {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 11px 18px;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+    .nav-cta:hover, .btn:hover { transform: translateY(-1px); background: var(--coral); color: var(--ink); }
+    .btn.secondary { background: transparent; color: var(--ink); }
+    .btn.secondary:hover { background: var(--ink); color: var(--paper); }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--coral);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .label::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: var(--coral);
+    }
+    .display {
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: clamp(54px, 8.6vw, 154px);
+      font-weight: 900;
+      letter-spacing: -0.055em;
+      line-height: 0.91;
+      text-wrap: balance;
+    }
+    .display em,
+    .serif-em {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.065em;
+    }
+    .dot { color: var(--coral); }
+    .lead {
+      max-width: 46ch;
+      color: var(--ink-soft);
+      font-size: clamp(17px, 1.6vw, 21px);
+      line-height: 1.55;
+      text-wrap: pretty;
+    }
+    .micro {
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      min-height: calc(100vh - 92px);
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .hero-rule-wrap { padding-top: 34px; }
+    .hero::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--line-soft);
+    }
+    .hero-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(360px, 0.72fr);
+      gap: clamp(36px, 6vw, 92px);
+      align-items: center;
+      padding: clamp(56px, 7vw, 100px) 0 46px;
+    }
+    .hero-copy .label { margin-bottom: 28px; }
+    .hero h1 { margin-bottom: 28px; max-width: 980px; }
+    .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px 24px;
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid var(--line);
+    }
+    .stat { display: inline-flex; align-items: center; gap: 10px; min-width: 150px; }
+    .ring {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px dashed var(--ink);
+      border-radius: 50%;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .ring.coral { border-color: var(--coral); color: var(--coral); }
+    .ring.mint { border-color: var(--finance); color: var(--finance-dark); border-style: solid; }
+    .stat span:last-child {
+      max-width: 112px;
+      color: var(--ink-soft);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+    .hero-art {
+      position: relative;
+      min-height: 620px;
+      border: 1px solid var(--line);
+      background: var(--marble);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero-art img { width: 100%; height: 100%; min-height: 620px; object-fit: cover; mix-blend-mode: multiply; }
+    .hero-art::before,
+    .hero-art::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      height: 14px;
+      background: var(--meander);
+      opacity: 0.66;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+    .hero-art::before { top: 18px; }
+    .hero-art::after { bottom: 18px; }
+    .corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border: 0 solid var(--ink-faint);
+    }
+    .corner.tl { top: 18px; left: 18px; border-top-width: 1px; border-left-width: 1px; }
+    .corner.tr { top: 18px; right: 18px; border-top-width: 1px; border-right-width: 1px; }
+    .corner.bl { bottom: 18px; left: 18px; border-bottom-width: 1px; border-left-width: 1px; }
+    .corner.br { bottom: 18px; right: 18px; border-bottom-width: 1px; border-right-width: 1px; }
+    .corner, .coin-rosette, .index-card { z-index: 2; }
+    .coin-rosette {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: 118px;
+      height: 118px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--coin);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--marble) 88%, transparent);
+      color: var(--aegean-dark);
+      font-family: var(--serif);
+      font-size: 42px;
+      font-style: italic;
+      line-height: 1;
+      box-shadow: inset 0 0 0 8px color-mix(in srgb, var(--coin) 10%, transparent);
+      mix-blend-mode: multiply;
+    }
+    .coin-rosette span {
+      position: absolute;
+      bottom: 23px;
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 9px;
+      font-style: normal;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .index-card {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      width: min(270px, calc(100% - 48px));
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bone) 86%, white);
+      padding: 18px;
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.6;
+      text-transform: uppercase;
+    }
+    .index-card span { display: block; }
+    .index-card b { color: var(--aegean); margin-right: 6px; }
+    .meander-band {
+      width: min(100%, 420px);
+      height: 16px;
+      margin-top: 26px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--meander);
+      opacity: 0.72;
+      mix-blend-mode: multiply;
+    }
+    .hero-foot {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 22px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding: 18px 0 22px;
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .hero-foot .center { justify-self: center; color: var(--coral); }
+    .hero-foot .right { justify-self: end; text-align: right; }
+
+    .sec-rule {
+      display: grid;
+      grid-template-columns: 96px 1fr auto;
+      gap: 20px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding-top: 22px;
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .roman {
+      color: var(--coral);
+      font-family: var(--serif);
+      font-size: 24px;
+      font-style: italic;
+      letter-spacing: 0;
+    }
+    .meta-grp { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+    .wire {
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-warm);
+    }
+    .wire-grid {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(3, 1fr);
+      border-left: 1px solid var(--line);
+    }
+    .wire-cell {
+      min-height: 134px;
+      padding: 24px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .wire-cell strong {
+      max-width: 24ch;
+      font-family: var(--sans);
+      font-size: clamp(22px, 2.5vw, 40px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 0.98;
+    }
+    .wire-cell p { color: var(--ink-mute); font-size: 14px; }
+    .stamp {
+      display: inline-flex;
+      width: max-content;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .stamp.mint { color: var(--finance-dark); border-color: color-mix(in srgb, var(--finance) 50%, transparent); background: color-mix(in srgb, var(--finance) 13%, transparent); }
+    .stamp.aegean { color: var(--aegean-dark); border-color: color-mix(in srgb, var(--aegean) 44%, transparent); background: color-mix(in srgb, var(--aegean) 10%, transparent); }
+
+    section.block { padding: clamp(76px, 10vw, 132px) 0; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1fr);
+      gap: clamp(44px, 7vw, 110px);
+      align-items: start;
+      margin-top: 54px;
+    }
+    .art-plate {
+      border: 1px solid var(--line);
+      background: var(--bone);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .art-plate img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; }
+    .copy-stack { display: grid; gap: 28px; }
+    .copy-stack h2 { font-size: clamp(44px, 6vw, 92px); max-width: 920px; }
+    .pull-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 8px;
+    }
+    .note-card {
+      border: 1px dotted var(--line);
+      background: color-mix(in srgb, var(--bone) 64%, transparent);
+      padding: 22px;
+      min-height: 152px;
+    }
+    .note-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .note-card p { color: var(--ink-mute); }
+
+    .capabilities { background: color-mix(in srgb, var(--paper) 86%, var(--bone)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .cap-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.55fr);
+      gap: 44px;
+      align-items: end;
+      margin-top: 52px;
+    }
+    .cap-head h2 { font-size: clamp(46px, 6.5vw, 110px); }
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+      margin-top: 54px;
+    }
+    .cap-card {
+      position: relative;
+      min-height: 340px;
+      padding: 26px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 28px;
+      overflow: hidden;
+    }
+    .cap-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 10px;
+      background: var(--meander);
+      opacity: 0.48;
+    }
+    .cap-card .num {
+      color: var(--coin);
+      font-family: var(--serif);
+      font-size: 34px;
+      font-style: italic;
+    }
+    .cap-card h3 {
+      margin-top: 12px;
+      font-family: var(--sans);
+      font-size: clamp(25px, 2.1vw, 34px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+    }
+    .cap-card p { color: var(--ink-mute); }
+    .cap-art {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 0.58fr 1fr;
+      gap: 26px;
+      align-items: stretch;
+    }
+    .cap-art .ledger-strip {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, var(--ink) 0%, var(--aegean-dark) 100%);
+      color: var(--paper);
+      padding: 26px;
+      display: grid;
+      align-content: space-between;
+      min-height: 330px;
+    }
+    .ledger-strip h3 {
+      font-family: var(--sans);
+      font-size: clamp(32px, 4vw, 58px);
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 0.96;
+    }
+    .ledger-strip table { width: 100%; border-collapse: collapse; margin-top: 32px; font-family: var(--mono); font-size: 12px; }
+    .ledger-strip td { border-top: 1px solid rgba(239, 231, 210, 0.16); padding: 10px 0; }
+    .ledger-strip td:last-child { text-align: right; color: var(--mustard); }
+    .greek-note {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(239, 231, 210, 0.18);
+      color: rgba(239, 231, 210, 0.7);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .desk-grid {
+      display: grid;
+      grid-template-columns: minmax(330px, 0.45fr) minmax(0, 1fr);
+      gap: 36px;
+      margin-top: 54px;
+      align-items: start;
+    }
+    .module-nav {
+      display: grid;
+      gap: 10px;
+      margin-top: 26px;
+    }
+    .module-nav button {
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 14px 16px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: background 160ms ease, border-color 160ms ease;
+    }
+    .module-nav button[aria-selected="true"] {
+      border-color: var(--ink);
+      background: var(--bone);
+    }
+    .product-window {
+      position: relative;
+      border: 1px solid var(--ink);
+      background: var(--bone);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .product-window::before {
+      content: "";
+      display: block;
+      height: 12px;
+      background: var(--meander);
+      opacity: 0.72;
+    }
+    .window-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--marble) 82%, var(--paper));
+      padding: 14px 18px;
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .window-dots { display: inline-flex; gap: 7px; }
+    .window-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); display: block; }
+    .window-dots i:nth-child(2) { background: var(--mustard); }
+    .window-dots i:nth-child(3) { background: var(--finance); }
+    .panel { display: none; padding: 24px; }
+    .panel.active { display: block; }
+    .finance-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+    .finance-table th, .finance-table td { padding: 13px 10px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+    .finance-table th { color: var(--aegean-dark); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .finance-table td:last-child, .finance-table th:last-child { text-align: right; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      color: var(--ink-mute);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .status.good { color: var(--finance-dark); border-color: color-mix(in srgb, var(--finance) 50%, transparent); background: color-mix(in srgb, var(--finance) 13%, transparent); }
+    .status.warn { color: #7a5100; border-color: color-mix(in srgb, var(--mustard) 55%, transparent); background: color-mix(in srgb, var(--mustard) 16%, transparent); }
+    .review-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-top: 22px;
+      border: 1px dotted var(--line);
+      padding: 16px;
+    }
+    .review-row button {
+      min-height: 44px;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 999px;
+      cursor: pointer;
+      padding: 10px 16px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .budget-bars { display: grid; gap: 18px; }
+    .budget-row { display: grid; gap: 8px; }
+    .budget-top { display: flex; justify-content: space-between; gap: 16px; font-family: var(--sans); font-weight: 800; }
+    .bar-track { height: 12px; border: 1px solid var(--line); background: var(--paper); overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--coral); width: var(--w); }
+    .bar-fill.mint { background: var(--finance); }
+    .sync-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .sync-card {
+      min-height: 180px;
+      border: 1px solid var(--line);
+      padding: 18px;
+      display: grid;
+      align-content: space-between;
+      gap: 20px;
+    }
+    .toggle {
+      width: 58px;
+      height: 32px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--paper);
+      padding: 3px;
+      cursor: pointer;
+    }
+    .toggle span {
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--ink);
+      transition: transform 160ms ease, background 160ms ease;
+    }
+    .toggle[aria-pressed="true"] span { transform: translateX(25px); background: var(--finance-dark); }
+
+    .labs-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(180px, 1fr));
+      gap: 18px;
+      margin-top: 42px;
+    }
+    .lab-card {
+      border: 1px solid var(--line);
+      background: var(--bone);
+      min-height: 430px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .lab-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; mix-blend-mode: multiply; border-bottom: 1px solid var(--line); }
+    .lab-card div { padding: 18px; display: grid; gap: 10px; align-content: start; }
+    .lab-card h3 { font-family: var(--sans); font-size: 22px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.05; }
+    .lab-card p { color: var(--ink-mute); font-size: 14px; }
+
+    .method { border-top: 1px solid var(--line); background: var(--paper-warm); }
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 54px;
+    }
+    .method-card {
+      border: 1px solid var(--line);
+      background: var(--bone);
+      min-height: 390px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .method-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; border-bottom: 1px solid var(--line); }
+    .method-card .body { padding: 20px; }
+    .method-card h3 { margin: 8px 0 10px; font-family: var(--sans); font-size: 25px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.02; }
+    .method-card p { color: var(--ink-mute); }
+
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.48fr);
+      gap: 38px;
+      align-items: stretch;
+      margin-top: 54px;
+    }
+    .dark-slab {
+      position: relative;
+      overflow: hidden;
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: 0.9fr 1fr;
+      gap: 30px;
+      align-items: end;
+      padding: clamp(26px, 4vw, 48px);
+      background: linear-gradient(135deg, var(--ink) 0%, var(--aegean-dark) 100%);
+      color: var(--paper);
+    }
+    .dark-slab h2 { color: var(--paper); font-size: clamp(44px, 6vw, 94px); }
+    .dark-slab .lead { color: rgba(239, 231, 210, 0.78); }
+    .work-cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-self: stretch;
+    }
+    .work-card {
+      border: 1px solid rgba(239, 231, 210, 0.2);
+      background: rgba(247, 241, 222, 0.05);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    .work-card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; filter: grayscale(0.2); }
+    .work-card h3 { font-family: var(--sans); font-size: 25px; font-weight: 900; letter-spacing: -0.04em; }
+    .work-card p { color: rgba(239, 231, 210, 0.72); font-size: 14px; }
+    .quote-card {
+      border: 1px solid var(--line);
+      background: var(--bone);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .quote-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; border-bottom: 1px solid var(--line); }
+    .quote-card blockquote { padding: 26px; font-family: var(--serif); font-size: clamp(27px, 3.2vw, 44px); font-style: italic; line-height: 1.08; }
+    .quote-card cite { display: block; margin-top: 18px; color: var(--ink-faint); font-family: var(--sans); font-size: 12px; font-style: normal; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    .cta {
+      border-top: 1px solid var(--line);
+      padding: clamp(76px, 10vw, 132px) 0 0;
+    }
+    .cta-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.58fr);
+      gap: 46px;
+      align-items: center;
+      margin-top: 54px;
+    }
+    .cta h2 { font-size: clamp(58px, 9vw, 148px); }
+    .cta-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+    .cta-art {
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--bone);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .cta-art img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; mix-blend-mode: multiply; }
+    .ribbon {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 22px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bone) 90%, white);
+      padding: 12px 14px;
+      color: var(--ink-faint);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .ribbon::before {
+      content: "";
+      display: block;
+      height: 10px;
+      margin-bottom: 10px;
+      background: var(--meander);
+      opacity: 0.55;
+    }
+
+    footer {
+      margin-top: clamp(72px, 10vw, 128px);
+      border-top: 1px solid var(--line);
+      padding: 52px 0 28px;
+    }
+    .footer-rule { margin-bottom: 36px; }
+    .foot-grid {
+      display: grid;
+      grid-template-columns: minmax(270px, 1.3fr) repeat(4, minmax(130px, 0.55fr));
+      gap: 28px;
+    }
+    .foot-brand p { margin-top: 18px; max-width: 42ch; color: var(--ink-mute); }
+    .foot-col h5 {
+      margin-bottom: 14px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .foot-col ul { display: grid; gap: 9px; list-style: none; }
+    .foot-col a, .inline-link { color: var(--ink-mute); text-decoration: none; border-bottom: 1px solid transparent; }
+    .foot-col a:hover, .inline-link:hover { color: var(--coral); border-bottom-color: var(--coral); }
+    .foot-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 46px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--ink-faint);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .foot-mega {
+      margin-top: 40px;
+      overflow: hidden;
+      font-family: var(--sans);
+      font-size: clamp(64px, 15vw, 214px);
+      font-weight: 900;
+      letter-spacing: -0.07em;
+      line-height: 0.82;
+    }
+    .foot-mega em { font-family: var(--serif); font-style: italic; font-weight: 500; }
+
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    [data-reveal="right"] { transform: translateX(32px); }
+    [data-revealed="true"] { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; }
+      [data-reveal] { opacity: 1; transform: none; }
+    }
+    @media (max-width: 1180px) {
+      .nav-links { display: none; }
+      .hero-grid, .about-grid, .cap-head, .desk-grid, .privacy-grid, .cta-grid { grid-template-columns: 1fr; }
+      .hero::before { display: none; }
+      .hero-art { min-height: 520px; }
+      .hero-art img { min-height: 520px; }
+      .wire-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cap-art { grid-template-columns: 1fr; }
+      .labs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .method-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dark-slab { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      .side-rail { display: none; }
+      .container, .wide { width: min(100% - 28px, 100%); }
+      .topbar-mid { display: none; }
+      .topbar-inner { font-size: 9px; }
+      .brand-meta { display: none; }
+      .nav { padding: 14px 0; }
+      .nav-cta { min-height: 38px; padding: 9px 13px; font-size: 10px; }
+      .hero { min-height: auto; }
+      .hero-grid { padding-top: 48px; }
+      .hero-art, .hero-art img { min-height: 420px; }
+      .coin-rosette { width: 86px; height: 86px; font-size: 31px; }
+      .coin-rosette span { display: none; }
+      .hero-foot { grid-template-columns: 1fr; text-align: left; }
+      .hero-foot .center, .hero-foot .right { justify-self: start; text-align: left; }
+      .sec-rule { grid-template-columns: 1fr; gap: 8px; }
+      .wire-grid, .pull-grid, .cap-grid, .sync-grid, .work-cards, .foot-grid { grid-template-columns: 1fr; }
+      .cap-card { min-height: 260px; }
+      .labs-grid, .method-grid { grid-template-columns: 1fr; }
+      .lab-card, .method-card { min-height: auto; }
+      .finance-table { font-size: 11px; }
+      .finance-table th:nth-child(3), .finance-table td:nth-child(3) { display: none; }
+      .review-row { grid-template-columns: 1fr; }
+      .foot-bottom { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="side-rail left"><span class="rail-text">Aegean ledger / Bangkok</span></div>
+  <div class="side-rail right"><span class="rail-text">Open Finance / private agora</span></div>
+
+  <div class="shell" id="top">
+    <div class="topbar">
+      <div class="container topbar-inner">
+        <span><span class="pulse"></span><b>Open Finance</b> / Preview</span>
+        <span class="topbar-mid"><span>Bangkok</span><span>Aegean ledger</span><span>Local-first</span></span>
+        <span class="topbar-right"><span>Private by default</span><span style="color:var(--aegean);">MMXXVI</span></span>
+      </div>
+    </div>
+
+    <header class="nav" aria-label="Primary navigation">
+      <div class="container nav-inner">
+        <a class="brand" href="#top" aria-label="Open Finance home">
+          <span class="brand-name">Open <em>Finance</em></span>
+          <span class="brand-meta"><b>Greek ledger</b>local-first</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="#about">Ledger <span class="badge">local</span></a></li>
+          <li><a href="#capabilities">Budgets <span class="badge">4</span></a></li>
+          <li><a href="#desk">Imports <span class="badge">csv</span></a></li>
+          <li><a href="#method">Sync <span class="badge">opt-in</span></a></li>
+          <li><a href="#privacy">Privacy <span class="badge">device</span></a></li>
+        </ul>
+        <a class="nav-cta" href="https://open-finance.ai" target="_blank" rel="noreferrer noopener">Open preview</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-rule-wrap">
+          <div class="sec-rule">
+            <span class="roman">I.</span>
+            <span class="meta-grp"><span>Hero</span><span class="dot">.</span><span>Private money, Aegean ledger</span></span>
+            <span>001 / 008</span>
+          </div>
+        </div>
+        <div class="container wide hero-grid">
+          <div class="hero-copy" data-reveal>
+            <span class="label">Bangkok / local-first finance / Aegean ledger grammar</span>
+            <h1 class="display" id="hero-title">Private money tracking, without the <em>spreadsheet sprawl</em><span class="dot">.</span></h1>
+            <p class="lead">Subscriptions, budgets, statements, spending records, and finance dashboards live in one private workspace on the user's device, ordered with the calm of a classical ledger.</p>
+            <div class="hero-actions">
+              <a class="btn" href="https://open-finance.ai" target="_blank" rel="noreferrer noopener">Open the preview</a>
+              <a class="btn secondary" href="#method">Read the method</a>
+            </div>
+            <div class="hero-stats" aria-label="Product principles">
+              <div class="stat"><span class="ring coral">1</span><span>private vault</span></div>
+              <div class="stat"><span class="ring">4</span><span>ledger columns</span></div>
+              <div class="stat"><span class="ring mint">2</span><span>optional sync paths</span></div>
+            </div>
+            <div class="meander-band" aria-hidden="true"></div>
+          </div>
+          <div class="hero-art" data-reveal="right" aria-label="Editorial collage plate">
+            <img src="assets/hero.png" alt="Editorial collage with paper texture, architectural forms, and botanical details" />
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="coin-rosette" aria-hidden="true">Δ<span>attic register</span></div>
+            <div class="index-card">
+              <span><b>Δ1</b>Import statements</span>
+              <span><b>Σ2</b>Review budgets</span>
+              <span><b>Λ3</b>Sync Sheets</span>
+              <span><b>Ω4</b>Back up to Cloudflare</span>
+            </div>
+          </div>
+        </div>
+        <div class="container hero-foot">
+          <span>Attic ledger rhythm / device-first</span>
+          <span class="center">open-finance.ai</span>
+          <span class="right">Bangkok source / Aegean finance style</span>
+        </div>
+      </section>
+
+      <section class="wire" aria-label="Operating principles">
+        <div class="container wide wire-grid">
+          <div class="wire-cell">
+            <span class="stamp aegean">Agora rule</span>
+            <strong>The local copy is the source of truth.</strong>
+          </div>
+          <div class="wire-cell">
+            <span class="stamp mint">Vault</span>
+            <p>Start private. Add sync only when the job requires collaboration or backup.</p>
+          </div>
+          <div class="wire-cell">
+            <span class="stamp">Columns</span>
+            <p>Keep subscriptions, budgets, imports, and notes connected to the same ledger.</p>
+          </div>
+          <div class="wire-cell">
+            <span class="stamp">Proof</span>
+            <p>Every imported row is visible before it becomes part of the workspace.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block about" id="about">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">II.</span>
+            <span class="meta-grp"><span>The premise</span><span class="dot">.</span><span>Owned finance records</span></span>
+            <span>002 / 008</span>
+          </div>
+          <div class="about-grid">
+            <div class="art-plate" data-reveal>
+              <img src="assets/about.png" alt="Editorial collage plate for a private finance workspace" />
+            </div>
+            <div class="copy-stack" data-reveal="right">
+              <span class="label">Manifesto / civic ledger</span>
+              <h2 class="display">Finance records should feel <em>owned</em>, like a civic register<span class="dot">.</span></h2>
+              <p class="lead">Open Finance is for people who want the clarity of a finance dashboard without handing every transaction to another cloud-first app. The product keeps the workspace local by default, then lets the user decide when to connect Google Sheets or Cloudflare backup.</p>
+              <div class="pull-grid">
+                <article class="note-card">
+                  <strong>Local-first posture</strong>
+                  <p>The money file starts on device, with user-controlled exports and an explicit sync boundary.</p>
+                </article>
+                <article class="note-card">
+                  <strong>Spreadsheet escape</strong>
+                  <p>Budget tables still exist where they help, but the interface handles context, status, and review.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block capabilities" id="capabilities">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">III.</span>
+            <span class="meta-grp"><span>Capabilities</span><span class="dot">.</span><span>Four money routines</span></span>
+            <span>003 / 008</span>
+          </div>
+          <div class="cap-head">
+            <h2 class="display" data-reveal>A finance workspace with <em>Greek ledger discipline</em><span class="dot">.</span></h2>
+            <p class="lead" data-reveal="right">The page is editorial, but the product surface is columned and dense where it needs to be: recurring dues, statement rows, category decisions, budget room, and backup state.</p>
+          </div>
+          <div class="cap-grid">
+            <article class="cap-card" data-reveal>
+              <div><span class="num">Α</span><p class="micro">Subscriptions</p><h3>Recurring spend radar</h3></div>
+              <p>Track active plans, renewal dates, category drift, and cancellation candidates in a compact ledger.</p>
+            </article>
+            <article class="cap-card" data-reveal>
+              <div><span class="num">Β</span><p class="micro">Budgets</p><h3>Columned planning</h3></div>
+              <p>Budget by month, category, and personal rule without turning the interface into a spreadsheet clone.</p>
+            </article>
+            <article class="cap-card" data-reveal>
+              <div><span class="num">Γ</span><p class="micro">Statements</p><h3>Import, clean, review</h3></div>
+              <p>Bring in bank exports, map columns, flag duplicates, and keep source files visible for audit.</p>
+            </article>
+            <article class="cap-card" data-reveal>
+              <div><span class="num">Δ</span><p class="micro">Records</p><h3>A durable finance archive</h3></div>
+              <p>Keep notes, receipts, tax-relevant records, and spending context close to the transactions they explain.</p>
+            </article>
+          </div>
+          <div class="cap-art">
+            <div class="ledger-strip" data-reveal>
+              <div>
+                <p class="micro" style="color:rgba(239,231,210,.58);">Attic register sample</p>
+                <h3>No mystery rows. Review before commit.</h3>
+              </div>
+              <table aria-label="Example ledger rows">
+                <tr><td>netflix</td><td>subscription</td><td>- 419 THB</td></tr>
+                <tr><td>bts commute</td><td>transport</td><td>- 52 THB</td></tr>
+                <tr><td>cashback</td><td>income</td><td>+ 90 THB</td></tr>
+              </table>
+              <p class="greek-note">Drachma-inspired register, Bangkok currency reality.</p>
+            </div>
+            <div class="art-plate" data-reveal="right">
+              <img src="assets/capabilities.png" alt="Bauhaus editorial collage for capabilities" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="desk">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">IV.</span>
+            <span class="meta-grp"><span>Product desk</span><span class="dot">.</span><span>Interactive workspace module</span></span>
+            <span>004 / 008</span>
+          </div>
+          <div class="desk-grid">
+            <div data-reveal>
+              <span class="label">Inside the workspace / column and coin</span>
+              <h2 class="display" style="font-size:clamp(44px,6.2vw,94px); margin-top:28px;">A calm, columned surface for money decisions<span class="dot">.</span></h2>
+              <p class="lead" style="margin-top:22px;">Tabs below are product navigation, not design controls. They model the three jobs a user returns to: review imports, check budget room, and choose sync state.</p>
+              <div class="module-nav" role="tablist" aria-label="Finance workspace modules">
+                <button type="button" role="tab" aria-selected="true" aria-controls="panel-imports" data-panel="imports">Statement review <span class="status warn">3 rows</span></button>
+                <button type="button" role="tab" aria-selected="false" aria-controls="panel-budgets" data-panel="budgets">Budget room <span class="status good">on track</span></button>
+                <button type="button" role="tab" aria-selected="false" aria-controls="panel-sync" data-panel="sync">Sync choices <span class="status">manual</span></button>
+              </div>
+            </div>
+            <div class="product-window" data-reveal="right">
+              <div class="window-bar">
+                <span class="window-dots"><i></i><i></i><i></i></span>
+                <span>open-finance.local / attic ledger</span>
+              </div>
+              <div class="panel active" id="panel-imports" data-panel-view="imports" role="tabpanel">
+                <table class="finance-table">
+                  <thead><tr><th>Entry</th><th>Column</th><th>State</th><th>Amount</th></tr></thead>
+                  <tbody>
+                    <tr><td>Electricity</td><td>Home</td><td><span class="status good">matched</span></td><td>- 1,742 THB</td></tr>
+                    <tr><td>Unknown POS</td><td>Review</td><td><span class="status warn">needs label</span></td><td>- 380 THB</td></tr>
+                    <tr><td>Cloud storage</td><td>Subscription</td><td><span class="status good">recurring</span></td><td>- 349 THB</td></tr>
+                    <tr><td>Duplicate transfer</td><td>Ignore</td><td><span class="status warn">possible dup</span></td><td>- 2,000 THB</td></tr>
+                  </tbody>
+                </table>
+                <div class="review-row">
+                  <p><strong>Review queue:</strong> imported rows stay staged until the user confirms mapping, category, and duplicate decisions.</p>
+                  <button type="button" id="review-action">Mark reviewed</button>
+                </div>
+              </div>
+              <div class="panel" id="panel-budgets" data-panel-view="budgets" role="tabpanel">
+                <div class="budget-bars">
+                  <div class="budget-row"><div class="budget-top"><span>Rent and utilities</span><span>72%</span></div><div class="bar-track"><div class="bar-fill" style="--w:72%"></div></div></div>
+                  <div class="budget-row"><div class="budget-top"><span>Food and groceries</span><span>61%</span></div><div class="bar-track"><div class="bar-fill mint" style="--w:61%"></div></div></div>
+                  <div class="budget-row"><div class="budget-top"><span>Subscriptions</span><span>44%</span></div><div class="bar-track"><div class="bar-fill" style="--w:44%"></div></div></div>
+                  <div class="budget-row"><div class="budget-top"><span>Travel reserve</span><span>28%</span></div><div class="bar-track"><div class="bar-fill mint" style="--w:28%"></div></div></div>
+                </div>
+                <div class="review-row">
+                  <p><strong>Budget note:</strong> room is shown as a decision aid, with no invented financial advice or automated nudging.</p>
+                  <span class="status good">portable</span>
+                </div>
+              </div>
+              <div class="panel" id="panel-sync" data-panel-view="sync" role="tabpanel">
+                <div class="sync-grid">
+                  <article class="sync-card">
+                    <div><p class="micro">Google Sheets</p><h3>Mirror selected views</h3><p>Share a controlled sheet without moving the whole workspace.</p></div>
+                    <button class="toggle" type="button" aria-pressed="false" aria-label="Toggle Google Sheets sync"><span></span></button>
+                  </article>
+                  <article class="sync-card">
+                    <div><p class="micro">Cloudflare</p><h3>Encrypted backup</h3><p>Keep an off-device copy when resilience matters more than full locality.</p></div>
+                    <button class="toggle" type="button" aria-pressed="true" aria-label="Toggle Cloudflare backup"><span></span></button>
+                  </article>
+                </div>
+                <div class="review-row">
+                  <p><strong>Sync rule:</strong> every connection is opt-in, visible, and reversible from the same workspace.</p>
+                  <span class="status">manual</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="labs-grid" aria-label="Product module cards">
+            <article class="lab-card" data-reveal><img src="assets/lab-1.png" alt="Collage plate for subscription tracking" /><div><p class="micro">Module</p><h3>Subscription Watch</h3><p>Renewal timeline, price-change notes, and cancel-by reminders.</p></div></article>
+            <article class="lab-card" data-reveal><img src="assets/lab-2.png" alt="Collage plate for budget dashboard" /><div><p class="micro">Dashboard</p><h3>Agora Budget Board</h3><p>Monthly envelopes with actuals, remaining room, and rollover notes.</p></div></article>
+            <article class="lab-card" data-reveal><img src="assets/lab-3.png" alt="Collage plate for statement import" /><div><p class="micro">Flow</p><h3>Statement Import</h3><p>CSV mapping, duplicate review, and confidence labels before commit.</p></div></article>
+            <article class="lab-card" data-reveal><img src="assets/lab-4.png" alt="Collage plate for sync review" /><div><p class="micro">Opt-in sync</p><h3>Sheet Mirror</h3><p>Push selected views to Google Sheets when collaboration beats privacy.</p></div></article>
+            <article class="lab-card" data-reveal><img src="assets/lab-5.png" alt="Collage plate for backup vault" /><div><p class="micro">Backup</p><h3>Cloudflare Vault</h3><p>Encrypted off-device copy when the user chooses resilience.</p></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="block method" id="method">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">V.</span>
+            <span class="meta-grp"><span>Method</span><span class="dot">.</span><span>Four columns, one vault</span></span>
+            <span>005 / 008</span>
+          </div>
+          <div class="cap-head">
+            <h2 class="display" data-reveal>Four columns keep the product honest<span class="dot">.</span></h2>
+            <p class="lead" data-reveal="right">The site leans editorial, but the method is practical: keep the workspace local, normalize imports, show the money map, and make sync a user decision.</p>
+          </div>
+          <div class="method-grid">
+            <article class="method-card" data-reveal><img src="assets/method-1.png" alt="Method collage for local storage" /><div class="body"><p class="micro">01</p><h3>Keep it local</h3><p>Start with device-first storage and an explicit workspace boundary.</p></div></article>
+            <article class="method-card" data-reveal><img src="assets/method-2.png" alt="Method collage for imports" /><div class="body"><p class="micro">02</p><h3>Normalize imports</h3><p>Turn messy statement exports into reviewable rows before they enter the ledger.</p></div></article>
+            <article class="method-card" data-reveal><img src="assets/method-3.png" alt="Method collage for dashboards" /><div class="body"><p class="micro">03</p><h3>Show the money map</h3><p>Surface subscriptions, budgets, spending, and records as one connected system.</p></div></article>
+            <article class="method-card" data-reveal><img src="assets/method-4.png" alt="Method collage for delivery" /><div class="body"><p class="micro">04</p><h3>Sync only by choice</h3><p>Google Sheets and Cloudflare backup remain optional, visible, and reversible.</p></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="privacy">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">VI.</span>
+            <span class="meta-grp"><span>Privacy model</span><span class="dot">.</span><span>Product truth, not trust theater</span></span>
+            <span>006 / 008</span>
+          </div>
+          <div class="privacy-grid">
+            <div class="dark-slab" data-reveal>
+              <div>
+                <span class="label">Selected surfaces</span>
+                <h2 class="display">Ledger and budget studio, without cloud gravity<span class="dot">.</span></h2>
+                <p class="lead" style="margin-top:22px;">The dark slab frames the product's two heaviest screens: a dense transaction table and a quieter monthly planning surface.</p>
+              </div>
+              <div class="work-cards">
+                <article class="work-card"><img src="assets/work-1.png" alt="Editorial collage for ledger view" /><h3>Ledger view</h3><p>Dense transaction table with filters, category chips, duplicate states, and review intent.</p></article>
+                <article class="work-card"><img src="assets/work-2.png" alt="Editorial collage for budget studio" /><h3>Budget studio</h3><p>Monthly planning surface balancing editorial hierarchy with product clarity.</p></article>
+              </div>
+            </div>
+            <aside class="quote-card" data-reveal="right">
+              <img src="assets/testimonial.png" alt="Editorial testimonial collage portrait" />
+              <blockquote>
+                "Private finance software should make the local copy feel like the source of truth."
+                <cite>Open Finance product note / Aegean ledger pass</cite>
+              </blockquote>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta" id="contact">
+        <div class="container">
+          <div class="sec-rule">
+            <span class="roman">VII.</span>
+            <span class="meta-grp"><span>Contact</span><span class="dot">.</span><span>Start with the ledger</span></span>
+            <span>007 / 008</span>
+          </div>
+          <div class="cta-grid">
+            <div data-reveal>
+              <span class="label">Open the preview</span>
+              <h2 class="display">Start with the <em>local ledger</em>, not another cloud vault<span class="dot">.</span></h2>
+              <p class="lead" style="margin-top:26px;">Open the preview, import a statement, and decide later whether any part of the workspace deserves to sync.</p>
+              <div class="cta-actions">
+                <a class="btn" href="https://open-finance.ai" target="_blank" rel="noreferrer noopener">Visit open-finance.ai</a>
+                <a class="btn secondary" href="#privacy">Review privacy model</a>
+              </div>
+            </div>
+            <div class="cta-art" data-reveal="right">
+              <img src="assets/cta.png" alt="Closing editorial collage plate" />
+              <div class="ribbon">Open Finance / Bangkok / Aegean ledger style</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="sec-rule footer-rule">
+          <span class="roman">VIII.</span>
+          <span class="meta-grp"><span>Footer</span><span class="dot">.</span><span>Product index</span></span>
+          <span>008 / 008</span>
+        </div>
+        <div class="foot-grid">
+          <div class="foot-brand">
+            <a href="#top" class="brand"><span class="brand-name">Open <em>Finance</em></span></a>
+            <p>Private money tracking, without the spreadsheet sprawl. Built with a Greek-key editorial rhythm for subscriptions, budgets, statement imports, records, optional Google Sheets sync, and Cloudflare backup.</p>
+          </div>
+          <div class="foot-col"><h5>Product</h5><ul><li><a href="#desk">Ledger</a></li><li><a href="#capabilities">Budgets</a></li><li><a href="#desk">Subscriptions</a></li><li><a href="#privacy">Records</a></li></ul></div>
+          <div class="foot-col"><h5>Data</h5><ul><li><a href="#about">Local storage</a></li><li><a href="#desk">Statement imports</a></li><li><a href="#desk">Google Sheets</a></li><li><a href="#method">Cloudflare backup</a></li></ul></div>
+          <div class="foot-col"><h5>Trust</h5><ul><li><a href="#about">Private by default</a></li><li><a href="#desk">User-controlled sync</a></li><li><a href="#desk">Review before commit</a></li><li><a href="#method">Portable exports</a></li></ul></div>
+          <div class="foot-col"><h5>Origin</h5><ul><li><a href="#top">Bangkok</a></li><li><a href="#top">Open-source</a></li><li><a href="#contact">Preview</a></li><li><a href="#contact">2026</a></li></ul></div>
+        </div>
+        <div class="foot-bottom">
+          <span><span class="pulse"></span><b style="color:var(--ink);">Open Finance</b> / local-first / 2026</span>
+          <span>Bangkok / open-finance.ai / Aegean ledger style</span>
+        </div>
+        <div class="foot-mega" data-reveal>Open <em>Finance</em>.</div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var elements = document.querySelectorAll('[data-reveal]:not([data-revealed])');
+      if (!elements.length) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        elements.forEach(function (el) { el.dataset.revealed = 'true'; });
+        return;
+      }
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.dataset.revealed = 'true';
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      elements.forEach(function (el) { observer.observe(el); });
+    })();
+
+    (function () {
+      var nav = document.querySelector('header.nav');
+      if (!nav) return;
+      var showTop = 100;
+      var delta = 6;
+      var lastY = window.scrollY || 0;
+      function onScroll() {
+        var y = window.scrollY || 0;
+        var d = y - lastY;
+        if (y <= showTop) nav.classList.remove('is-hidden');
+        else if (d > delta) nav.classList.add('is-hidden');
+        else if (d < -delta) nav.classList.remove('is-hidden');
+        lastY = y;
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+    })();
+
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"][data-panel]'));
+      var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel-view]'));
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var key = tab.getAttribute('data-panel');
+          tabs.forEach(function (item) { item.setAttribute('aria-selected', String(item === tab)); });
+          panels.forEach(function (panel) { panel.classList.toggle('active', panel.getAttribute('data-panel-view') === key); });
+        });
+      });
+
+      document.querySelectorAll('.toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+          var next = toggle.getAttribute('aria-pressed') !== 'true';
+          toggle.setAttribute('aria-pressed', String(next));
+        });
+      });
+
+      var review = document.getElementById('review-action');
+      if (review) {
+        review.addEventListener('click', function () {
+          review.textContent = 'Reviewed';
+          review.disabled = true;
+          review.style.background = 'var(--finance-dark)';
+          review.style.borderColor = 'var(--finance-dark)';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

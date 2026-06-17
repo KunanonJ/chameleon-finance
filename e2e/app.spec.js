@@ -2,17 +2,17 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   // Clear localStorage before each test
-  await page.goto('/');
+  await page.goto('/app');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
+  await page.getByRole('heading', { name: 'Open Finance' }).waitFor();
   // Default tab is Finance Tracker; switch to Subscriptions for subscription tests
   await page.click('button:has-text("Subscriptions")');
 });
 
 test.describe('App loads', () => {
   test('shows header and empty state', async ({ page }) => {
-    await expect(page.locator('h1')).toHaveText('Chameleon');
+    await expect(page.locator('h1')).toHaveText('Open Finance');
     await expect(page.locator('text=No subscriptions yet')).toBeVisible();
     await expect(page.locator('text=Add your first subscription to get started')).toBeVisible();
   });
@@ -349,7 +349,7 @@ test.describe('Full User Flow', () => {
 
     // Reload the page
     await page.reload();
-    await page.getByRole('heading', { name: 'Chameleon' }).waitFor();
+    await page.getByRole('heading', { name: 'Open Finance' }).waitFor();
 
     // Switch to Subscriptions tab (Finance is now default)
     await page.click('button:has-text("Subscriptions")');
