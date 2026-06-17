@@ -230,7 +230,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* ============================================
    Open Finance landing page
-   Editorial layout adapted from the imported Open-Design-Landing export,
+   Editorial layout adapted from the imported docs/design/open-design-landing export,
    scoped under .of-landing so dashboard tokens and controls stay stable.
    ============================================ */
 .of-landing {
@@ -752,7 +752,7 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
-/* Open Finance editorial override — closer to Open-Design-Landing export */
+/* Open Finance editorial override - closer to docs/design/open-design-landing export */
 .of-landing {
   --of-paper: #efe7d2;
   --of-paper-warm: #ece4cf;

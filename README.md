@@ -39,8 +39,11 @@ Data flow is mostly:
 
 ```text
 src/
-  main.jsx                  # App bootstrap + Cloudflare analytics beacon injection
-  App.jsx                   # Top-level app shell, tab routing, autosync/autobackup loops
+  app/
+    main.jsx                # App bootstrap + Cloudflare analytics beacon injection
+    App.jsx                 # Top-level app shell, tab routing, autosync/autobackup loops
+    styles/index.css        # Tailwind v4 tokens, global styles, route shells
+    test/setup.js           # Vitest/browser test setup
   store/                    # Zustand stores (subscriptions, finance, currency, theme)
   features/                 # Product features (finance, subscriptions, sync, trends, budget, settings)
   shared/
@@ -49,9 +52,10 @@ src/
     ui/                     # Reusable UI primitives
 functions/
   api/                      # Cloudflare Pages Function API routes
-e2e/                        # Playwright end-to-end tests
-d1/schema.sql               # D1 schema for push subscription/notification data
-scripts/                    # Utility scripts (VAPID keys, statement PDF conversion)
+tests/e2e/                  # Playwright end-to-end tests
+infra/d1/schema.sql         # D1 schema for push subscription/notification data
+tools/scripts/              # Utility scripts (VAPID keys, statement PDF conversion)
+docs/design/                # Source design exports and handoff assets
 ```
 
 ---
@@ -60,12 +64,12 @@ scripts/                    # Utility scripts (VAPID keys, statement PDF convers
 
 ### 1) Bootstrap and App Shell
 
-#### `src/main.jsx`
+#### `src/app/main.jsx`
 
 - Mounts React root with `StrictMode`.
 - Injects Cloudflare Analytics script when `VITE_CLOUDFLARE_ANALYTICS_TOKEN` exists.
 
-#### `src/App.jsx`
+#### `src/app/App.jsx`
 
 Responsibilities:
 
@@ -143,7 +147,7 @@ All state stores use `zustand` with persistence middleware and custom migration-
 - Exposes:
   - `theme`, `isDark`, `toggleTheme`, `getChartColors`
 
-#### `src/index.css`
+#### `src/app/styles/index.css`
 
 - Tailwind v4 config + custom dark variant.
 - Central CSS variables for text, border, chart colors, and shadow tokens.
@@ -505,7 +509,7 @@ npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=t
 ### `vitest.config.js`
 
 - JSDOM test environment
-- setup file: `src/test/setup.js`
+- setup file: `src/app/test/setup.js`
 - test include: `src/**/*.{test,spec}.{js,jsx}`
 
 ### Wrangler configs
@@ -577,7 +581,7 @@ Optional legacy endpoints may also use:
 
 If you are onboarding, read these first in order:
 
-1. `src/App.jsx`
+1. `src/app/App.jsx`
 2. `src/store/subscriptionStore.js`
 3. `src/store/financeStore.js`
 4. `src/features/sync/sheetsApi.js`

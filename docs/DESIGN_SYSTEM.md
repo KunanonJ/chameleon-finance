@@ -1,8 +1,8 @@
 # Design System
 
 Open Finance's visual language now combines the original warm finance tracker tokens with the
-editorial paper system imported from `Open-Design-Landing/`. The **source of truth is the code**:
-global tokens and route-specific shells live in [`src/index.css`](../src/index.css). Update this
+editorial paper system imported from `docs/design/open-design-landing/`. The **source of truth is the code**:
+global tokens and route-specific shells live in [`src/app/styles/index.css`](../src/app/styles/index.css). Update this
 doc when you change a token or shell pattern.
 
 ## Vibe
@@ -71,7 +71,7 @@ A `[data-theme="dark"]` block redefines these to a warm charcoal palette (toggle
 
 ## Editorial Shells
 
-- **Landing route** — rendered from `Open-Design-Landing/open-finance-atelier-landing.html`
+- **Landing route** — rendered from `docs/design/open-design-landing/open-finance-atelier-landing.html`
   through `src/features/landing/OpenFinanceLanding.jsx`; assets are served from
   `public/open-design-assets/`. Keep this route source-backed when exact fidelity to the provided
   export is required.
@@ -95,7 +95,7 @@ A `[data-theme="dark"]` block redefines these to a warm charcoal palette (toggle
 
 ## Changing the design
 
-- Colors / radius / breakpoints: edit [`src/index.css`](../src/index.css). To retheme a feature
+- Colors / radius / breakpoints: edit [`src/app/styles/index.css`](../src/app/styles/index.css). To retheme a feature
   accent, override the Tailwind name in the `@theme` block (one source of truth) rather than
   hardcoding hex in components.
 - Update this doc whenever you add or change a token.

@@ -8,9 +8,9 @@ Open Finance uses **Vitest** for unit/integration tests and **Playwright** for e
 |---------|-------|
 | `npm test` | Run all unit/integration tests once (Vitest, jsdom) |
 | `npm run test:watch` | Vitest watch mode |
-| `npm run test:e2e` | Playwright E2E (`e2e/`, config `playwright.config.js`) |
+| `npm run test:e2e` | Playwright E2E (`tests/e2e/`, config `playwright.config.js`) |
 
-Current baseline: **297 unit tests passing** across 27 files.
+Current baseline: **282 unit tests passing** across 25 files.
 
 ## Philosophy
 
@@ -25,7 +25,7 @@ Current baseline: **297 unit tests passing** across 27 files.
   (e.g. `financeUtils.test.js`, `currencies` math, `csvParser.test.js`, `bankStatementImport.test.js`,
   `serverStorage.test.js`, `dom-safety.test.js`, `price-validation.test.js`, `rates-error.test.js`,
   `storage-errors.test.js`).
-- **E2E:** `e2e/` (Playwright).
+- **E2E:** `tests/e2e/` (Playwright).
 
 ## Critical paths to cover (finance app)
 

@@ -61,8 +61,11 @@ npm run cap:android   # open Android Studio
 
 ```text
 src/
-  main.jsx            # bootstrap + optional analytics beacon
-  App.jsx             # app shell, tab routing, auto-sync / auto-backup loops
+  app/
+    main.jsx          # bootstrap + optional analytics beacon
+    App.jsx           # app shell, tab routing, auto-sync / auto-backup loops
+    styles/index.css  # design tokens + global styles (see DESIGN_SYSTEM.md)
+    test/setup.js     # Vitest/browser test setup
   store/              # Zustand stores (subscription, finance, currency, settings/theme)
   features/           # feature modules (finance, subscriptions, budget, trends,
                       #   visualizations, reminders, presets, sync, settings)
@@ -70,11 +73,11 @@ src/
                       #   bankStatementImport, sankey/treemap layout, serverStorage)
   shared/hooks/       # shared hooks (useTheme)
   shared/ui/          # reusable UI primitives (incl. OrangeAsterisk brand mark)
-  index.css           # design tokens + global styles (see DESIGN_SYSTEM.md)
 functions/api/        # Cloudflare Pages Functions (see API.md)
-d1/schema.sql         # D1 schema (push subscriptions / notifications)
-e2e/                  # Playwright tests
-scripts/              # utility scripts (VAPID keys, statement PDF conversion)
+infra/d1/schema.sql   # D1 schema (push subscriptions / notifications)
+tests/e2e/            # Playwright tests
+tools/scripts/        # utility scripts (VAPID keys, statement PDF conversion)
+docs/design/          # source design exports and handoff assets
 ```
 
 ## Conventions

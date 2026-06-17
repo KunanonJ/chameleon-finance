@@ -20,7 +20,7 @@ Open Finance deploys as a **Cloudflare Pages** app: a static Vite build (`dist/`
 |---------|------|------|
 | `R2_BUCKET` | R2 bucket | `subgrid-storage` |
 | `ANALYTICS` | Analytics Engine dataset | `subgrid_events` |
-| D1 | D1 database | schema in [`d1/schema.sql`](../d1/schema.sql); bind as `USER_DB` or `DB` |
+| D1 | D1 database | schema in [`infra/d1/schema.sql`](../infra/d1/schema.sql); bind as `USER_DB` or `DB` |
 
 `wrangler.jsonc` is the primary Pages config. `wrangler.toml` is kept as a compatibility mirror
 for local/CLI workflows and should use the same project and binding names. Legacy handlers still
@@ -60,11 +60,11 @@ npx wrangler pages deploy dist
 
 ## D1 schema
 
-Apply the schema in [`d1/schema.sql`](../d1/schema.sql):
+Apply the schema in [`infra/d1/schema.sql`](../infra/d1/schema.sql):
 
 ```bash
-npx wrangler d1 execute <DB_NAME> --file=d1/schema.sql        # local
-npx wrangler d1 execute <DB_NAME> --file=d1/schema.sql --remote  # production
+npx wrangler d1 execute <DB_NAME> --file=infra/d1/schema.sql        # local
+npx wrangler d1 execute <DB_NAME> --file=infra/d1/schema.sql --remote  # production
 ```
 
 ## Pre-deploy checklist
