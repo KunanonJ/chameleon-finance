@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { PRODUCT_BRAND, getDatedExportFilename } from './productBranding';
 
 const USER_FACING_FILES = [
-  'src/App.jsx',
+  'src/app/App.jsx',
   'index.html',
   'public/manifest.json',
   'capacitor.config.json',
@@ -47,7 +47,7 @@ describe('product branding', () => {
 
   test('core public metadata uses Open Finance instead of Chameleon', () => {
     const publicFiles = [
-      'src/App.jsx',
+      'src/app/App.jsx',
       'index.html',
       'public/manifest.json',
       'capacitor.config.json',
@@ -55,7 +55,7 @@ describe('product branding', () => {
 
     for (const file of publicFiles) {
       const content = readFileSync(resolve(process.cwd(), file), 'utf8');
-      if (file === 'src/App.jsx') {
+      if (file === 'src/app/App.jsx') {
         expect(content, `${file} should use canonical brand constants`).toMatch(/PRODUCT_BRAND/);
       } else {
         expect(content, `${file} should reference Open Finance`).toMatch(/Open Finance/);

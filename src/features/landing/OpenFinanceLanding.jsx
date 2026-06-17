@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import atelierLandingHtml from '../../../Open-Design-Landing/open-finance-atelier-landing.html?raw';
+import atelierLandingHtml from '../../../docs/design/open-design-landing/open-finance-atelier-landing.html?raw';
 
 const ASSET_PUBLIC_PATH = '/open-design-assets/';
 
