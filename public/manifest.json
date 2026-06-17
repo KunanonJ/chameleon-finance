@@ -1,8 +1,8 @@
 {
-  "name": "Chameleon Finance",
-  "short_name": "Chameleon",
+  "name": "Open Finance",
+  "short_name": "Open Finance",
   "description": "Finance and subscription tracker with dashboards and Google Sheets sync",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#f9f2e6",
   "theme_color": "#ff9901",

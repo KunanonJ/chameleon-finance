@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useSubscriptionStore } from '@store/subscriptionStore';
 import { useCurrencyStore } from '@store/currencyStore';
 import { toMonthly } from '@shared/lib/currencies';
+import { getDatedExportFilename } from '@shared/lib/productBranding';
 
 export const STORAGE_KEY = 'subgrid_history';
 
@@ -180,7 +181,7 @@ export function useTrends() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'chameleon-trends-' + new Date().toISOString().split('T')[0] + '.csv';
+    link.download = getDatedExportFilename(new Date(), 'trends');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useFinanceStore } from '@store/financeStore';
 import { exportFinanceCSV } from '@shared/lib/financeUtils';
+import { getDatedExportFilename } from '@shared/lib/productBranding';
 import FinanceSummary from '@features/finance/FinanceSummary';
 import FinanceToolbar from '@features/finance/FinanceToolbar';
 import FinanceList from '@features/finance/FinanceList';
@@ -59,7 +60,7 @@ export default function FinanceSection() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'chameleon-finance-' + new Date().toISOString().split('T')[0] + '.csv';
+    link.download = getDatedExportFilename(new Date(), 'finance');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

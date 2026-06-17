@@ -7,8 +7,14 @@ dist/
 ios/
 android/
 test-results/
+playwright-report/
 *.log
 .DS_Store
 .dev.vars
 Statement/
 tmp/pylibs/
+.vibecode-backup/
+__pycache__/
+*.pyc
+.claude/hooks/.logs/
+.codex/hooks/.logs/

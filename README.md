@@ -1,9 +1,24 @@
-# Chameleon Finance
+# Open Finance
 
-Chameleon is a local-first finance and subscription tracker with optional cloud sync/backup, Google Sheets integration, and dashboard analytics.
+Open Finance is a local-first finance and subscription tracker with optional cloud sync/backup, Google Sheets integration, and dashboard analytics.
 
-- Production: [https://chameleon-finance.pages.dev](https://chameleon-finance.pages.dev)
-- Stack: React 19, Vite 7, Zustand, Recharts, Cloudflare Pages Functions, D1, R2
+- Production: [https://chameleon-finance-c4y.pages.dev](https://chameleon-finance-c4y.pages.dev)
+- Stack: React 19, Vite 8, Tailwind CSS v4, Zustand, Recharts, Cloudflare Pages Functions, D1, R2
+
+## Documentation
+
+| Doc | What it covers |
+| --- | --- |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Local setup, scripts, project layout, conventions |
+| [docs/TESTING.md](docs/TESTING.md) | Unit (Vitest) + E2E (Playwright), how to run and write tests |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Cloudflare Pages build/deploy, bindings, env vars |
+| [docs/API.md](docs/API.md) | Pages Functions API routes, auth, request/response shapes |
+| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | L Health CI: tokens, theming, components |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, commit format, PR checklist |
+| [CHANGELOG.md](CHANGELOG.md) | Notable changes |
+| [SECURITY.md](SECURITY.md) | Reporting vulnerabilities |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community expectations |
+| [CLAUDE.md](CLAUDE.md) | Orientation for AI coding agents |
 
 ## Quick Architecture Summary
 
@@ -446,8 +461,8 @@ Common fields used across UI/store/sync:
 ### Local Development
 
 ```bash
-git clone https://github.com/KunanonJ/abdull-finance.git
-cd abdull-finance
+git clone https://github.com/KunanonJ/chameleon-finance.git
+cd chameleon-finance
 npm install
 npm run dev
 ```
@@ -470,25 +485,9 @@ npm run preview
 
 ### Cloudflare Deploy (Pages)
 
-Production is deployed on Cloudflare Pages under the GoGoCash Cloudflare account
-(`187ab61ed9dbc6e616cb23e6b95aa8f1`).
-
-- Project: `chameleon-finance`
-- Production URL: `https://chameleon-finance-c4y.pages.dev`
-- Production branch: `main`
-- D1 database: `chameleon-finance-db` (`5c279de4-9b53-455c-af95-6ca173b42d4f`)
-- R2 bucket: `subgrid-storage`
-- Analytics Engine dataset: `subgrid_events`
-
 ```bash
 npm run build
-CLOUDFLARE_ACCOUNT_ID=187ab61ed9dbc6e616cb23e6b95aa8f1 npx wrangler pages deploy dist --project-name=chameleon-finance --branch main
-```
-
-Verify the deployment:
-
-```bash
-curl https://chameleon-finance-c4y.pages.dev/api/health
+npx wrangler pages deploy dist --project-name=chameleon-finance --commit-dirty=true
 ```
 
 ---

@@ -7,6 +7,7 @@ import GoogleSheetsSettings from '@features/sync/GoogleSheetsSettings';
 import { useCurrencyStore } from '@store/currencyStore';
 import { useSubscriptionStore } from '@store/subscriptionStore';
 import { useFinanceStore } from '@store/financeStore';
+import { getDatedJsonExportFilename } from '@shared/lib/productBranding';
 import {
   buildServerPayload,
   backupToServer,
@@ -52,7 +53,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'chameleon-export-' + new Date().toISOString().split('T')[0] + '.json';
+    link.download = getDatedJsonExportFilename();
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

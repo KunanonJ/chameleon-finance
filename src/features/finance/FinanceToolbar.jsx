@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useFinanceStore } from '@store/financeStore';
 import { exportFinanceCSV } from '@shared/lib/financeUtils';
 import { FINANCE_TEMPLATE_COPY_URL } from '@shared/lib/financeConstants';
+import { getDatedExportFilename } from '@shared/lib/productBranding';
 import { useFinanceSheetsSync } from '@features/finance/useFinanceSheetsSync';
 import * as SheetsAPI from '@features/sync/sheetsApi';
 import { importBankStatementFiles } from '@shared/lib/bankStatementImport';
@@ -23,7 +24,7 @@ export default function FinanceToolbar() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'chameleon-finance-' + new Date().toISOString().split('T')[0] + '.csv';
+    link.download = getDatedExportFilename(new Date(), 'finance');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
